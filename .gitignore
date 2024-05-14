@@ -1,0 +1,4 @@
+[Bb]uild/
+
+# conan generated cmake presets:
+CMakeUserPresets.json
