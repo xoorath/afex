@@ -8,11 +8,11 @@ class afexRecipe(ConanFile):
     package_type = "application"
 
     # Optional metadata
-    license = "<Put the package license here>"
-    author = "<Put your name here> <And your email here>"
-    url = "<Package recipe repository url here, for issues about the package>"
-    description = "<Description of afex package here>"
-    topics = ("<Put some tag here>", "<here>", "<and here>")
+    license = "CC BY-NC 4.0"
+    author = "Jared Thomson <jared.thomson@xoorath.com>"
+    url = "https://github.com/xoorath/afex"
+    description = "Another fucking engine by xoorath."
+    topics = ("Game Engine", "Game Development")
 
     # Binary configuration
     settings = "os", "compiler", "build_type", "arch"
