@@ -1,4 +1,12 @@
-[Bb]uild/
+# AFEX generated temp files (includes cmake and conan)
+Generated/
 
-# conan generated cmake presets:
-CMakeUserPresets.json
+# Conan generated cmake presets:
+**/CMakeUserPresets.json
+
+# Python
+**/__pycache__/
+
+# Visual Studio
+*.sln
+.vs
