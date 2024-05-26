@@ -41,10 +41,15 @@ function(declare_engine_project)
 
         set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "0 Engine")
 
+        target_compile_definitions(${PROJECT_NAME}
+            PUBLIC
+                "_CRT_SECURE_NO_WARNINGS=1"
+        )
         # Disable RTTI
         target_compile_options(${PROJECT_NAME} PRIVATE /GR-)
         # Set warning level
         target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+
     else()
         # Disable RTTI
         target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)

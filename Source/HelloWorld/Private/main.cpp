@@ -2,26 +2,35 @@
 #include "./Logging/AppLogging.h"
 
 // Engine
-#include <Core/afex.h>
 #include <Core/Logging.h>
+#include <Core/Window.h>
 
 // System
+#include <memory.h>
 #include <conio.h>
-#include <vector>
-#include <string>
 
 int main() {
     // Configure SPD first. This will let the logging macros from Core/Logging output consistently. 
     HelloWorld::ConfigureLogging();
 
-    afex();
-
-    std::vector<std::string> vec;
-    vec.push_back("test_package");
-
-    afex_print_vector(vec);
-
     AFEX_LOG_INFO("Welcome to spdlog from main!");
-    
-    while(!_getch());
+
+    if(Platform::Window::GlobalInit())
+    {
+        std::unique_ptr<Platform::Window> appWindow = std::make_unique<Platform::Window>(640, 480, "Hello World");
+        if(appWindow->IsValid())
+        {
+            appWindow->MakeWindowContextCurrent();
+            while(!appWindow->CloseRequested())
+            {
+                appWindow->Clear();
+                // render frame
+
+                appWindow->SwapBuffers();
+                appWindow->PollEvents();
+            }
+        }
+        Platform::Window::GlobalShutdown();
+    }
+    HelloWorld::ShutdownLogging();
 }

@@ -7,51 +7,69 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/msvc_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 // System
-#include <chrono>
+#include <ctime>
 #include <mutex>
-#include <vector>
 
 namespace HelloWorld
 {
-    spdlog::sink_ptr CreateSink_MSVC()
+    ////////////////////////////////////////////////////////////////////////// static
+    static spdlog::sink_ptr CreateSink_MSVC()
     {
-        spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::msvc_sink<std::mutex>>
-        (
-            /*check_debugger_present=*/ true
-        );
-        sink->set_level(/*log_level=*/spdlog::level::debug);
+        const bool checkDebuggerPresent = true;
+        spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::msvc_sink<std::mutex>>(checkDebuggerPresent);
+        sink->set_level(spdlog::level::trace);
         return sink;
     }
 
-    spdlog::sink_ptr CreateSink_File()
+    static spdlog::sink_ptr CreateSink_Stdout()
     {
-        spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>
-        (
-            /*filename=*/ SPDLOG_FILENAME_T("logs/afex.log")
-        );
-        sink->set_level(/*log_level=*/spdlog::level::info);
+        spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        sink->set_level(spdlog::level::info);
         return sink;
     }
 
+    static spdlog::sink_ptr CreateSink_File()
+    {
+        const spdlog::filename_t destination = SPDLOG_FILENAME_T("logs/afex.log");
+        spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(destination);
+        sink->set_level(spdlog::level::info);
+        return sink;
+    }
+
+    ////////////////////////////////////////////////////////////////////////// public
     void ConfigureLogging()
     {
         using namespace std::chrono_literals;
-        spdlog::flush_every(3s);
 
         Core::g_Logger = std::make_shared<spdlog::logger>
         (
-            /*name=*/ std::string("AppLogger"),
-            /*sinks=*/ 
-            spdlog::sinks_init_list({
+            std::string("AppLogger"),
+            spdlog::sinks_init_list
+            ({
                 CreateSink_MSVC(),
+                CreateSink_Stdout(),
                 CreateSink_File()
             })
         );
+        Core::g_Logger->set_pattern("[%H:%M:%S.%e] [%t] [%L] %s(%#):  %v");
+        Core::g_Logger->set_level(spdlog::level::trace);
+        spdlog::register_logger(Core::g_Logger);
+        
+        std::time_t now;
+        std::time(&now);
+        char date_buf[64] = {0};
+        std::strftime(date_buf, sizeof(date_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
 
-        Core::g_Logger->set_pattern(/*pattern=*/"[%H:%M:%S.%e] [%t] [%L] %s(%#):  %v");
+        AFEX_LOG_INFO("({}) Logging has been configured.", date_buf);
 
-        AFEX_LOG_INFO("Logging has been configured.");
+    }
+
+    void ShutdownLogging()
+    {
+        spdlog::shutdown();
+        Core::g_Logger.reset();
     }
 }

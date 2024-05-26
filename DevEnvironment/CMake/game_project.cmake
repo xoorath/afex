@@ -48,6 +48,10 @@ function(declare_game_project engine_library_dependencies)
             )
         endforeach()
 
+        target_compile_definitions(${PROJECT_NAME}
+            PUBLIC
+                "_CRT_SECURE_NO_WARNINGS=1"
+        )
         set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "1 Game")
         # Disable RTTI
         target_compile_options(${PROJECT_NAME} PRIVATE /GR-)

@@ -1,6 +1,8 @@
-#include <spdlog/spdlog.h>
+#pragma once
 
+//////////////////////////////////////////////////////////////////////////
 namespace HelloWorld
 {
     void ConfigureLogging();
+    void ShutdownLogging();
 }
