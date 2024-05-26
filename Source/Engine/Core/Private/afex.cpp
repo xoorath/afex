@@ -5,7 +5,8 @@
 // System
 #include <iostream>
 
-void afex(){
+void afex()
+{
     
     AFEX_LOG_INFO("afex: Welcome to spdlog!");
 

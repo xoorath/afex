@@ -40,6 +40,16 @@ function(declare_engine_project)
         endforeach()
 
         set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "0 Engine")
+
+        # Disable RTTI
+        target_compile_options(${PROJECT_NAME} PRIVATE /GR-)
+        # Set warning level
+        target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+    else()
+        # Disable RTTI
+        target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)
+        # Set warning level
+        target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
     endif()
 
 endfunction(declare_engine_project)

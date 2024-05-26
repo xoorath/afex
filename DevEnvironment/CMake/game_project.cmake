@@ -49,5 +49,14 @@ function(declare_game_project engine_library_dependencies)
         endforeach()
 
         set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "1 Game")
+        # Disable RTTI
+        target_compile_options(${PROJECT_NAME} PRIVATE /GR-)
+        # Set warning level
+        target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+    else()
+        # Disable RTTI
+        target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)
+        # Set warning level
+        target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
     endif()
 endfunction(declare_game_project)

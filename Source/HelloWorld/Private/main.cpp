@@ -20,8 +20,8 @@ int main() {
     vec.push_back("test_package");
 
     afex_print_vector(vec);
-    
-    AFEX_LOG_INFO("Welcome to spdlog from main!");
 
+    AFEX_LOG_INFO("Welcome to spdlog from main!");
+    
     while(!_getch());
 }
