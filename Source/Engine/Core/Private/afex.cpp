@@ -1,11 +1,13 @@
-#include <iostream>
+// Engine
 #include <Core/afex.h>
+#include <Core/Logging.h>
 
-#include <spdlog/spdlog.h>
+// System
+#include <iostream>
 
 void afex(){
     
-    spdlog::info("afex: Welcome to spdlog!");
+    AFEX_LOG_INFO("afex: Welcome to spdlog!");
 
     #ifdef NDEBUG
     std::cout << "afex/1.0: Hello World Release!\n";

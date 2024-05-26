@@ -3,12 +3,7 @@
 #include <vector>
 #include <string>
 
+#include <Core/Core.export.h>
 
-#ifdef _WIN32
-  #define AFEX_EXPORT __declspec(dllexport)
-#else
-  #define AFEX_EXPORT
-#endif
-
-AFEX_EXPORT void afex();
-AFEX_EXPORT void afex_print_vector(const std::vector<std::string> &strings);
+CORE_EXPORT void afex();
+CORE_EXPORT void afex_print_vector(const std::vector<std::string> &strings);

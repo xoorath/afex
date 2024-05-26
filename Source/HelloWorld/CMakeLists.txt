@@ -1,4 +1,4 @@
-project(Game CXX)
+project(HelloWorld CXX)
 
 declare_game_project(Core)
 

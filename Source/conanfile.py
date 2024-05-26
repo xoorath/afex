@@ -1,7 +1,7 @@
 from conan import ConanFile
 from Engine.conanfile import requirements as EngineRequirements
 from Engine.conanfile import configure as EngineConfigure
-from Game.conanfile import requirements as GameRequirements
+from HelloWorld.conanfile import requirements as HelloWorldRequirements
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 
 class sourceRecipe(ConanFile):
@@ -13,7 +13,7 @@ class sourceRecipe(ConanFile):
 
     def requirements(self):
         EngineRequirements(self)
-        GameRequirements(self)
+        HelloWorldRequirements(self)
 
     def configure(self):
         EngineConfigure(self)

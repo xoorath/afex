@@ -20,9 +20,15 @@ function(declare_engine_project)
             LIBRARY DESTINATION lib
     )
 
+        
+    generate_export_header(${PROJECT_NAME}
+        EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/GeneratedHeaders/${PROJECT_NAME}/include/${PROJECT_NAME}/${PROJECT_NAME}.export.h"
+    )
+
     target_include_directories(${PROJECT_NAME}
         PUBLIC
             "Public/"
+            "${CMAKE_BINARY_DIR}/GeneratedHeaders/${PROJECT_NAME}/include/"
     )
 
     if(MSVC)
