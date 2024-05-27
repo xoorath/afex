@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 project(Source CXX)
 
+include(../DevEnvironment/CMake/common_project.cmake)
 include(../DevEnvironment/CMake/third_party.cmake)
 include(../DevEnvironment/CMake/game_project.cmake)
 include(GenerateExportHeader)
