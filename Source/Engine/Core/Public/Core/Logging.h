@@ -2,6 +2,7 @@
 
 // Engine
 #include <Core/Core.export.h>
+#include <Core/CommonMacros.h>
 
 // External
 #include <spdlog/logger.h>
@@ -9,6 +10,7 @@
 
 // System
 #include <memory.h>
+#include <format>
 
 //////////////////////////////////////////////////////////////////////////
 namespace Core
@@ -27,7 +29,8 @@ namespace Core
     #define AFEX_LOG_INFO(...) SPDLOG_LOGGER_CALL(::Core::g_Logger, spdlog::level::info, __VA_ARGS__)
     #define AFEX_LOG_ERROR(...) SPDLOG_LOGGER_CALL(::Core::g_Logger, spdlog::level::err, __VA_ARGS__)
 #else
+    // Todo: consider logging across multiple build types
     #define AFEX_LOG_TRACE(...)
     #define AFEX_LOG_INFO(...)
-    #define AFEX_LOG_ERROR(...) SPDLOG_LOGGER_CALL(::Core::g_Logger, spdlog::level::err, __VA_ARGS__)
+    #define AFEX_LOG_ERROR(...)
 #endif

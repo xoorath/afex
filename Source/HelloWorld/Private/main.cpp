@@ -2,12 +2,14 @@
 #include "./Logging/AppLogging.h"
 
 // Engine
+#include <Core/Assert.h>
+#include <Core/CommonMacros.h>
 #include <Core/Logging.h>
-#include <Core/Window.h>
+#include <Platform/Window.h>
 
 // System
+#include <inttypes.h>
 #include <memory.h>
-#include <conio.h>
 
 int main() {
     // Configure SPD first. This will let the logging macros from Core/Logging output consistently. 
@@ -17,10 +19,23 @@ int main() {
 
     if(Platform::Window::GlobalInit())
     {
-        std::unique_ptr<Platform::Window> appWindow = std::make_unique<Platform::Window>(640, 480, "Hello World");
+        std::unique_ptr<Platform::Window> appWindow = std::make_unique<Platform::Window>(1920, 1080, "Hello World");
         if(appWindow->IsValid())
         {
             appWindow->MakeWindowContextCurrent();
+            appWindow->GetKeyboardMutable().OnKeyEvent() += 
+                [window=appWindow.get()](Platform::KeyCode key, int32_t scanCode, Platform::KeyboardAction action, int32_t modifiers)
+                {
+                    AFEX_UNUSED(scanCode);
+                    AFEX_UNUSED(modifiers);
+
+                    if(action == Platform::KeyboardAction::Release 
+                        && key == Platform::KeyCode::Escape)
+                    {
+                        window->RequestClose();
+                    }
+                };
+
             while(!appWindow->CloseRequested())
             {
                 appWindow->Clear();

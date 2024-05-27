@@ -17,6 +17,7 @@ class sourceRecipe(ConanFile):
 
     def configure(self):
         EngineConfigure(self)
+        self.settings.compiler.cppstd="20"
 
     def generate(self):
         deps = CMakeDeps(self)

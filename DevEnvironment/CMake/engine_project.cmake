@@ -32,6 +32,7 @@ function(declare_engine_project)
     )
 
     if(MSVC)
+
         foreach(_source IN ITEMS ${PRIVATE_FILES} ${PUBLIC_FILES})
             get_filename_component(_source_path "${_source}" PATH)
             string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" _group_path "${_source_path}")
@@ -45,16 +46,26 @@ function(declare_engine_project)
             PUBLIC
                 "_CRT_SECURE_NO_WARNINGS=1"
         )
-        # Disable RTTI
-        target_compile_options(${PROJECT_NAME} PRIVATE /GR-)
-        # Set warning level
-        target_compile_options(${PROJECT_NAME} PRIVATE /W4 /WX)
+        target_compile_options(${PROJECT_NAME} 
+            PRIVATE 
+                /GR- # Disable RTTI
+        )
+        
+        target_compile_options(${PROJECT_NAME} 
+            PRIVATE 
+                /W4 /WX # Set warning level
+        )
 
     else()
-        # Disable RTTI
-        target_compile_options(${PROJECT_NAME} PRIVATE -fno-rtti)
-        # Set warning level
-        target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        target_compile_options(${PROJECT_NAME} 
+            PRIVATE 
+                -fno-rtti # Disable RTTI
+        )
+        
+        target_compile_options(${TARGET_NAME} 
+            PRIVATE
+                -Wall -Wextra -Wpedantic -Werror # Set warning level
+        )
     endif()
 
 endfunction(declare_engine_project)
