@@ -2,8 +2,7 @@
 
 License: [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) ([Local Copy](./LICENSE.txt))
 
-# Development Dependencies
+# Documentation
 
-CMake 3.29
-Conan 2.1.0
-Python 3.11.5
+* [Setting up a development environment](./Documentation/SetupDevEnv.md)
+* [Developer Workflow](./Documentation/DevWorkflow.md)

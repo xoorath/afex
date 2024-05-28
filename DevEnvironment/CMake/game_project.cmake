@@ -1,34 +1,36 @@
 
 function(declare_game_project engine_library_dependencies)
     declare_common_project(FALSE)
+
+    target_include_directories(${PROJECT_NAME}
+        PUBLIC
+            "Public/"
+    )
+
+    ########################################################## Collect info on dependencies
+
+    foreach(dep IN ITEMS ${engine_library_dependencies})
+        list(APPEND DEBUGGER_ENVIRONMENT "${CMAKE_BINARY_DIR}/Engine/${dep}/$(Configuration)/")
+    endforeach()
+
+    set(CONAN_DEPLOYER_DIR "${CMAKE_BINARY_DIR}/full_deploy/host")
+    file(GLOB_RECURSE dll_files_to_copy "${CONAN_DEPLOYER_DIR}/*/*.dll")
+    foreach(dll IN ITEMS ${dll_files_to_copy})
+        get_filename_component(dllDirectory ${dll} DIRECTORY)
+        list(APPEND DEBUGGER_ENVIRONMENT ${dllDirectory})
+    endforeach()
     
-    if(WIN32)
-        foreach(dep IN ITEMS ${engine_library_dependencies})
-            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-                "${PROJECT_BINARY_DIR}/../Engine/${dep}/$(configuration)/${dep}.dll"
-                "$(TargetDir)"
-            )
-        endforeach()
+    ########################################################## Setup Visual Studio
 
-        set(CONAN_DEPLOYER_DIR "${CMAKE_BINARY_DIR}/full_deploy/host")
+    if(MSVC)
+        SET(USER_FILE_TEMPLATE "${CMAKE_BINARY_DIR}/../../DevEnvironment/CMake/GameProjectUserTemplate.vcxproj.user")
+        SET(USER_FILE_DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.vcxproj.user")
+        list(REMOVE_DUPLICATES DEBUGGER_ENVIRONMENT)
+        CONFIGURE_FILE(${USER_FILE_TEMPLATE} ${USER_FILE_DESTINATION} @ONLY)
 
-        if(CMAKE_CONFIGURATION_TYPES)
-            file(GLOB_RECURSE dll_files_to_copy "${CMAKE_BINARY_DIR}/bin/${config}/*/*.dll")
-        else()
-            file(GLOB_RECURSE dll_files_to_copy "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}/*/*.dll")
-        endif()
-
-        foreach(dll IN ITEMS ${dll_files_to_copy})
-            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-                "${dll}"
-                "$(TargetDir)"
-            )
-        endforeach()
+        set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "1 Game")
     endif()
 
     copy_third_party_dlls()
     
-    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "1 Game")
 endfunction(declare_game_project)

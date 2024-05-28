@@ -8,23 +8,9 @@ function(declare_common_project is_library)
 
     if (${is_library})
         add_library(${PROJECT_NAME} SHARED ${PRIVATE_FILES} ${PUBLIC_FILES} conanfile.py)
-        generate_export_header(${PROJECT_NAME}
-            EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/GeneratedHeaders/${PROJECT_NAME}/include/${PROJECT_NAME}/${PROJECT_NAME}.export.h"
-        )
-        target_include_directories(${PROJECT_NAME}
-            PUBLIC
-                "Public/"
-                "${CMAKE_BINARY_DIR}/GeneratedHeaders/${PROJECT_NAME}/include/"
-        )
     else()
         add_executable(${PROJECT_NAME} ${PRIVATE_FILES} ${PUBLIC_FILES} conanfile.py)
     endif()
-
-    install(TARGETS ${PROJECT_NAME} DESTINATION "."
-            RUNTIME DESTINATION bin
-            ARCHIVE DESTINATION lib
-            LIBRARY DESTINATION lib
-    )
 
     if(MSVC)
         foreach(_source IN ITEMS ${PRIVATE_FILES} ${PUBLIC_FILES})

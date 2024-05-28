@@ -28,7 +28,7 @@ def CheckForTools():
     from shutil import which
     for program in ["conan", "cmake"]:
         if which(program) is not None:
-            print(f"{program}: found")
+            PrintContext(f"{program}: found")
         else:
             PrintError(f"{program} not found", doExcept=True)
 
@@ -59,13 +59,17 @@ def SetupCMake(buildType : str):
     for projectRoot in PROJECT_ROOTS:
         cmakeSourceDir = os.path.join(SCRIPT_DIR, projectRoot)
         cmakeBuildDir = GetCMakeTempDir(buildType)
+        packageInstallDir = os.path.join(cmakeBuildDir, "Package")
+        
+        PrintContext(f"packageInstallDir: {packageInstallDir}")
 
         completedProcess = subprocess.run(["cmake",
                         "-S", cmakeSourceDir,
                         "-B", cmakeBuildDir,
                         "--preset", f"conan-default-{buildType.lower()}",
                         f"-DCMAKE_BUILD_TYPE={buildType}", 
-                        f"-DCMAKE_CONFIGURATION_TYPES={buildType}"]) 
+                        f"-DCMAKE_CONFIGURATION_TYPES={buildType}",
+                        f"-DCMAKE_INSTALL_PREFIX={packageInstallDir}"])
         if completedProcess.returncode != 0:
             PrintError(f"cmake exited with code {completedProcess.returncode}")
 
@@ -83,7 +87,7 @@ def SetupLinks(buildType : str):
         afexSlnSource = os.path.join(GetCMakeTempDir(buildType), f"{projectRoot.lower()}.sln")
         destName = f"{projectRoot.lower()}_{buildType.lower()}.sln"
         afexSlnDest = os.path.join(SCRIPT_DIR, destName)
-        print(f"re-creating shortcut to {destName}")
+        PrintContext(f"re-creating shortcut to {destName}")
         TryMakeFileLink(afexSlnSource, afexSlnDest)
         if not os.path.exists(afexSlnDest) or not os.path.islink(afexSlnDest):
             PrintError(f"Failed to create shortcut to {destName}")

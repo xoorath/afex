@@ -6,7 +6,6 @@ DEPTH_COLOR_TABLE = [
 
 gSectionDepth=0
 
-
 def PrintBar(label: str, barChar : str, length : int):
     global gSectionDepth
 
@@ -45,10 +44,13 @@ def EndSection(sectionName : str):
     print(" AFEX\033[0m")
 
 def PrintContext(context : str):
-    print("\x1b[3;37;40m", end="")
+    global gSectionDepth
+    global DEPTH_COLOR_TABLE
+    color = str(DEPTH_COLOR_TABLE[(gSectionDepth-1) % (len(DEPTH_COLOR_TABLE))])
+    print("\x1b[1;" + color + "m", end ="")
     for line in context.splitlines():
-        print("    " + line)
-    print("\033[0m", end="")
+        print(">>  " + line)
+    print("\033[0m", end ="")
 
 def PrintError(error : str, doExcept : bool = False):
     print("\x1b[3;31;40m", end="")
