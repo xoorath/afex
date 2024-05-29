@@ -1,9 +1,8 @@
 from conan import ConanFile
-from Engine.conanfile import requirements as EngineRequirements
-from Engine.conanfile import configure as EngineConfigure
-from HelloWorld.conanfile import requirements as HelloWorldRequirements
-from TowerDefense.conanfile import requirements as TowerDefenseRequirements
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
+from Projects import GetAllProjects
+
+ALL_PROJECTS = GetAllProjects()
 
 class sourceRecipe(ConanFile):
     name = "source"
@@ -13,13 +12,23 @@ class sourceRecipe(ConanFile):
         cmake_layout(self)
 
     def requirements(self):
-        EngineRequirements(self)
-        HelloWorldRequirements(self)
-        TowerDefenseRequirements(self)
+        allRequires = []
+        for project in ALL_PROJECTS:
+            if project.conan_dependencies:
+                for dep in project.conan_dependencies:
+                    if dep.require not in allRequires: 
+                        allRequires.append(dep.require)
+        for req in allRequires:
+            self.requires(req)
+            
 
     def configure(self):
-        EngineConfigure(self)
         self.settings.compiler.cppstd="20"
+        for project in ALL_PROJECTS:
+            if project.conan_dependencies:
+                for dep in project.conan_dependencies:
+                    for option in dep.options:
+                        self.options[dep.name][option.name] = option.value
 
     def generate(self):
         deps = CMakeDeps(self)

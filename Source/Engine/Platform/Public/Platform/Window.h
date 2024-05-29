@@ -5,7 +5,7 @@
 #include <Platform/HMI/Keyboard.h>
 
 // System
-#include <inttypes.h>
+#include <cinttypes>
 
 //////////////////////////////////////////////////////////////////////////
 namespace Platform

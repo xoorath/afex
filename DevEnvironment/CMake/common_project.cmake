@@ -7,9 +7,9 @@ function(declare_common_project is_library)
     file(GLOB_RECURSE PUBLIC_FILES  "${PUBLIC_DIR}/*")
 
     if (${is_library})
-        add_library(${PROJECT_NAME} SHARED ${PRIVATE_FILES} ${PUBLIC_FILES} conanfile.py)
+        add_library(${PROJECT_NAME} SHARED ${PRIVATE_FILES} ${PUBLIC_FILES})
     else()
-        add_executable(${PROJECT_NAME} ${PRIVATE_FILES} ${PUBLIC_FILES} conanfile.py)
+        add_executable(${PROJECT_NAME} ${PRIVATE_FILES} ${PUBLIC_FILES})
     endif()
 
     if(MSVC)

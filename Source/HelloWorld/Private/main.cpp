@@ -8,7 +8,7 @@
 #include <Platform/Window.h>
 
 // System
-#include <inttypes.h>
+#include <cinttypes>
 #include <memory.h>
 
 int main() {

@@ -1,8 +1,8 @@
+# GENERATED FILE: See Setup.py
 project(TowerDefense CXX)
-
 declare_game_project("Core;Platform")
-
-target_link_libraries(${PROJECT_NAME} 
-        PRIVATE
-            Core
-            Platform)
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+        Core
+        Platform
+)
