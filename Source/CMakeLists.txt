@@ -8,6 +8,7 @@ include(GenerateExportHeader)
 
 add_subdirectory(Engine)
 add_subdirectory(HelloWorld)
+add_subdirectory(TowerDefense)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 if(MSVC)

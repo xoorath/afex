@@ -1,0 +1,8 @@
+#pragma once
+
+//////////////////////////////////////////////////////////////////////////
+namespace TowerDefense
+{
+    void ConfigureLogging();
+    void ShutdownLogging();
+}

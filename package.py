@@ -9,7 +9,7 @@ from DevEnvironment.BuildFormatting import BeginSection, EndSection, PrintContex
 TEMP_DIR_NAME = "Generated"
 PROJECT_ROOTS = [ "Source" ]
 POSSIBLE_CONFIGS = ["Debug", "Release"]
-POSSIBLE_TARGETS = ["HelloWorld"]
+POSSIBLE_TARGETS = ["HelloWorld", "TowerDefense"]
 
 # Advanced:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
