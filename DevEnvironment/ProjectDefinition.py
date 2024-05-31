@@ -62,10 +62,12 @@ class GameProject(ProjectBase):
                  directory :str,
                  conan_dependencies: list[ConanDependency] = None,
                  engine_dependencies: list[EngineDependency] = None,
-                 defines :list[str] = None):
+                 defines :list[str] = None,
+                 startup : bool = False):
         super(GameProject, self).__init__(
             name=name,
             directory=directory,
             conan_dependencies=conan_dependencies,
             engine_dependencies=engine_dependencies,
             defines = defines)
+        self.startup = startup

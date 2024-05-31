@@ -37,13 +37,18 @@ def GetAllProjects() -> list[ProjectBase]:
         ),
 
         ############################################################################### Games
-        GameProject(name="HelloWorld", directory="HelloWorld",
+        GameProject(
+            name="HelloWorld",
+            directory="HelloWorld",
             engine_dependencies=[
                 EngineDependency(name="Core"),
-                EngineDependency(name="Platform")]
+                EngineDependency(name="Platform")],
+            startup=True
         ),
         
-        GameProject(name="TowerDefense", directory="TowerDefense",
+        GameProject(
+            name="TowerDefense",
+            directory="TowerDefense",
             engine_dependencies=[
                 EngineDependency(name="Core"),
                 EngineDependency(name="Platform")]
