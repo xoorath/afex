@@ -1,5 +1,8 @@
 # AFEX generated temp files (includes cmake and conan)
 Generated/
+**/CmakeLists.txt
+**/conanfile.py
+!Source/conanfile.py
 
 # Conan generated cmake presets:
 **/CMakeUserPresets.json
