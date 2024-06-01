@@ -32,6 +32,10 @@ def GetAllProjects() -> list[ProjectBase]:
                     require="glfw/3.4",
                     cmake_find = "glfw3",
                     options=[ConanDependencyOption("shared", True)]
+                ),
+                ConanDependency(
+                    require="bgfx/cci.20230216",
+                    cmake_name = "bgfx::bgfx"
                 )
             ]
         ),

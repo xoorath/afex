@@ -27,8 +27,9 @@ class sourceRecipe(ConanFile):
         for project in ALL_PROJECTS:
             if project.conan_dependencies:
                 for dep in project.conan_dependencies:
-                    for option in dep.options:
-                        self.options[dep.name][option.name] = option.value
+                    if dep.options:
+                        for option in dep.options:
+                            self.options[dep.name][option.name] = option.value
 
     def generate(self):
         deps = CMakeDeps(self)

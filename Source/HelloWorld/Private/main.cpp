@@ -45,6 +45,7 @@ int main() {
                 appWindow->PollEvents();
             }
         }
+        appWindow.reset();
         Platform::Window::GlobalShutdown();
     }
     HelloWorld::ShutdownLogging();
