@@ -1,0 +1,46 @@
+name: Build
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        build_type: [Debug, Release]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: 3.11.5
+
+    - name: Setup Conan
+      uses: jwidauer/setup-conan@v1
+      with:
+        version: 2.1.0
+
+    - name: get-cmake
+      uses: lukka/get-cmake@v3.29.3
+      with:
+        cmakeVersion: 3.29
+
+    - name: Setup MSBuild
+      if: runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v1
+
+    - name: Build Source.sln (${{ matrix.build_type }})
+      if: runner.os == 'Windows'
+      run: |
+        msbuild Generated/CMake_${{ matrix.build_type }}/Source.sln /p:Configuration=${{ matrix.build_type }} /p:Platform="x64"
+      env:
+        SolutionPath: Generated/CMake_${{ matrix.build_type }}/Source.sln
+        Configuration: ${{ matrix.build_type }}
