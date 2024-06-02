@@ -1,0 +1,107 @@
+name: Build and Package
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        build_type: [Debug, Release]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cache Conan packages
+      id: cache-conan
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ runner.os == 'Windows' && 'C:\\Users\\runneradmin\\.conan' || '~/.conan' }}/data
+        key: ${{ matrix.os }}-${{ matrix.build_type }}-conan-${{ hashFiles('Source/Projects.py') }}
+        restore-keys: |
+          ${{ matrix.os }}-${{ matrix.build_type }}-conan-
+
+    - name: Setup Python
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: 3.11.5
+
+    - name: get-cmake
+      uses: lukka/get-cmake@v3.29.3
+      with:
+        cmakeVersion: 3.29
+
+    - name: Setup Conan
+      uses: jwidauer/setup-conan@v1
+      with:
+        version: 2.1.0
+
+    - name: Conan Profile Detect
+      run: conan profile detect
+
+    - name: Show Conan Profile
+      run: conan profile show
+
+    - name: Run Python script
+      run: python Setup.py
+
+    - name: Setup MSBuild
+      if: runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v1
+
+    - name: Build Source.sln (${{ matrix.build_type }})
+      if: runner.os == 'Windows'
+      run: |
+        msbuild Generated/CMake_${{ matrix.build_type }}/Source.sln /p:Configuration=${{ matrix.build_type }} /p:Platform="x64"
+      env:
+        SolutionPath: Generated/CMake_${{ matrix.build_type }}/Source.sln
+        Configuration: ${{ matrix.build_type }}
+
+    - name: Save build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifacts-${{ matrix.build_type }}
+        path: Generated/CMake_${{ matrix.build_type }}
+
+  package:
+    needs: build
+    runs-on: windows-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-artifacts-Release  # Change this if you want to package Debug artifacts as well
+
+    - name: Setup Python
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: 3.11.5
+
+    - name: Package the output
+      run: |
+        &python Package.py -c ${{ matrix.build_type }}
+        $basePath = "Generated/Packages"
+        $packages = Get-ChildItem -Path $basePath -Directory
+        foreach ($package in $packages) {
+            $packagePath = Join-Path -Path $basePath -ChildPath $package.Name
+            $outputPath = "$package.Name.zip"
+            Compress-Archive -Path "$packagePath/*" -DestinationPath $outputPath
+            Write-Host "Packaged $packagePath into $outputPath"
+        }
+
+    - name: Upload package artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: packages
+        path: '*.zip'
