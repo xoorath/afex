@@ -23,15 +23,16 @@ jobs:
       with:
         python-version: 3.11.5
 
-    - name: Setup Conan
-      uses: jwidauer/setup-conan@v1
-      with:
-        version: 2.1.0
-
     - name: get-cmake
       uses: lukka/get-cmake@v3.29.3
       with:
         cmakeVersion: 3.29
+
+    - name: Conan Profile Detect
+      run: conan profile detect
+
+    - name: Show Conan Profile
+      run: conan profile show default
 
     - name: Run Python script
       run: python Setup.py
