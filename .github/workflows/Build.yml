@@ -18,6 +18,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Cache Conan packages
+      id: cache-conan
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ runner.os == 'Windows' && 'C:\\Users\\runneradmin\\.conan' || '~/.conan' }}/data
+        key: ${{ runner.os }}-conan-${{ hashFiles('Source/Projects.py') }}
+        restore-keys: |
+          ${{ runner.os }}-conan-
+
     - name: Setup Python
       uses: actions/setup-python@v5.1.0
       with:
