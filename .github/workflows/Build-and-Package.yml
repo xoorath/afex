@@ -51,7 +51,7 @@ jobs:
         cmakeVersion: 3.29
 
     - name: Conan Profile Detect
-      run: conan profile detect
+      run: conan profile detect --force
 
     - name: Show Conan Profile
       run: conan profile show
