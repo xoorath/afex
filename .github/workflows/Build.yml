@@ -33,6 +33,9 @@ jobs:
       with:
         cmakeVersion: 3.29
 
+    - name: Run Python script
+      run: python Setup.py
+
     - name: Setup MSBuild
       if: runner.os == 'Windows'
       uses: microsoft/setup-msbuild@v1
