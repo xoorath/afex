@@ -1,4 +1,4 @@
-# AFEX
+![AFEX Logo](Documentation/Logo.png)
 
 License: [CC BY-NC 4.0](./Documentation/License.CC%20BY-NC%204.0.md) OR [MIT](./Documentation/License.MIT.md)
 
