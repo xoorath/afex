@@ -28,6 +28,11 @@ jobs:
       with:
         cmakeVersion: 3.29
 
+    - name: Setup Conan
+      uses: jwidauer/setup-conan@v1
+      with:
+        version: 2.1.0
+
     - name: Conan Profile Detect
       run: conan profile detect
 
