@@ -22,7 +22,7 @@ jobs:
     - name: Setup Conan
       uses: jwidauer/setup-conan@v1
       with:
-        version: 2.1.0
+        version: 2.1.*
 
     - name: Get Conan cache location
       if: runner.os == 'Windows'
@@ -43,12 +43,12 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v5.1.0
       with:
-        python-version: 3.11.5
+        python-version: 3.*
 
     - name: get-cmake
       uses: lukka/get-cmake@v3.29.3
       with:
-        cmakeVersion: 3.29
+        cmakeVersion: 3.*
 
     - name: Conan Profile Detect
       run: conan profile detect --force
@@ -78,21 +78,26 @@ jobs:
         path: Generated/CMake_${{ matrix.build_type }}
 
   package:
-    needs: build
-    runs-on: windows-latest
     if: github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        build_type: [Debug, Release]
+    needs: build
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
 
     - name: Download build artifacts
       uses: actions/download-artifact@v3
       with:
-        name: build-artifacts-Release  # Change this if you want to package Debug artifacts as well
+        name: build-artifacts-${{ matrix.build_type }}  # Change this if you want to package Debug artifacts as well
 
     - name: Setup Python
       uses: actions/setup-python@v5.1.0
       with:
-        python-version: 3.11.5
+        python-version: 3.*
 
     - name: Package the output
       run: |
