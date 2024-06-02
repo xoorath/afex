@@ -37,7 +37,7 @@ jobs:
       run: conan profile detect
 
     - name: Show Conan Profile
-      run: conan profile show default
+      run: conan profile show
 
     - name: Run Python script
       run: python Setup.py
