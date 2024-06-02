@@ -23,19 +23,19 @@ namespace Platform
         // This will close and destroy any remaining windows.
         static PLATFORM_EXPORT void GlobalShutdown();
 
-        PLATFORM_EXPORT Window(int32_t width, int32_t height, const char* title);
+        PLATFORM_EXPORT Window(uint32_t width, uint32_t height, const char* title);
         PLATFORM_EXPORT ~Window();
         PLATFORM_EXPORT bool IsValid() const { return m_PIMPL != nullptr; }
 
-        // The following window functions are only safe to call if IsValid returns true.
-
-        PLATFORM_EXPORT void MakeWindowContextCurrent() const;
+        // Window lifecycle functions:
         PLATFORM_EXPORT void RequestClose();
         PLATFORM_EXPORT bool CloseRequested() const;
-        PLATFORM_EXPORT void Clear();
-        PLATFORM_EXPORT void SwapBuffers();
+
+        // Frame lifecycle functions:
+        PLATFORM_EXPORT void RenderFrame();
         PLATFORM_EXPORT void PollEvents();
 
+        // HMI:
         PLATFORM_EXPORT const Keyboard& GetKeyboard() const;
         PLATFORM_EXPORT Keyboard& GetKeyboardMutable();
 

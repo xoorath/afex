@@ -22,7 +22,6 @@ int main() {
         std::unique_ptr<Platform::Window> appWindow = std::make_unique<Platform::Window>(1920, 1080, "Hello World");
         if(appWindow->IsValid())
         {
-            appWindow->MakeWindowContextCurrent();
             appWindow->GetKeyboardMutable().OnKeyEvent() += 
                 [window=appWindow.get()](Platform::KeyCode key, int32_t scanCode, Platform::KeyboardAction action, int32_t modifiers)
                 {
@@ -38,11 +37,8 @@ int main() {
 
             while(!appWindow->CloseRequested())
             {
-                appWindow->Clear();
-                // render frame
-
-                appWindow->SwapBuffers();
                 appWindow->PollEvents();
+                appWindow->RenderFrame();
             }
         }
         appWindow.reset();

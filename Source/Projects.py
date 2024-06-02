@@ -24,18 +24,31 @@ def GetAllProjects() -> list[ProjectBase]:
         ),
 
         EngineProject(
+            name="Graphics",
+            directory="Engine/Graphics",
+            engine_dependencies=[EngineDependency(name="Core")],
+            conan_dependencies=[
+            # bgfx does not support static linkage. The graphics library will be responsible for
+            # linking bgfx in and exporting functionality required by other modules.
+            ConanDependency(
+                    require="bgfx/cci.20230216",
+                    cmake_name = "bgfx::bgfx"
+                )
+            ]
+        ),
+
+        EngineProject(
             name="Platform", 
             directory="Engine/Platform",
-            engine_dependencies=[EngineDependency(name="Core")],
+            engine_dependencies=[
+                EngineDependency(name="Core"),
+                EngineDependency(name="Graphics")
+            ],
             conan_dependencies=[
                 ConanDependency(
                     require="glfw/3.4",
                     cmake_find = "glfw3",
                     options=[ConanDependencyOption("shared", True)]
-                ),
-                ConanDependency(
-                    require="bgfx/cci.20230216",
-                    cmake_name = "bgfx::bgfx"
                 )
             ]
         ),
@@ -46,7 +59,8 @@ def GetAllProjects() -> list[ProjectBase]:
             directory="HelloWorld",
             engine_dependencies=[
                 EngineDependency(name="Core"),
-                EngineDependency(name="Platform")],
+                EngineDependency(name="Platform"),
+                EngineDependency(name="Graphics")],
             startup=True
         ),
         
@@ -55,6 +69,7 @@ def GetAllProjects() -> list[ProjectBase]:
             directory="TowerDefense",
             engine_dependencies=[
                 EngineDependency(name="Core"),
-                EngineDependency(name="Platform")]
+                EngineDependency(name="Platform"),
+                EngineDependency(name="Graphics")]
         ),
     ]
