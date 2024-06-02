@@ -4,6 +4,9 @@
 #include "Event.h"
 #include "Logo.h"
 
+// Graphics
+#include "bgfxCallbacks.h"
+
 // Engine
 #include <Core/Assert.h>
 #include <Core/CommonMacros.h>
@@ -146,7 +149,7 @@ namespace Graphics
             /*fn=*/         &RenderEngineImpl::StaticRenderThreadFunc,
             /*userData=*/   reinterpret_cast<void*>(this),
             /*stackSize=*/  RenderEngine::k_RenderThreadStackSize,
-            /*name=*/       "RenderEngine"
+            /*name=*/       "AFEX Render Thread"
         ))
         {
             AFEX_LOG_ERROR("Failed to create the render thread");
@@ -184,6 +187,8 @@ namespace Graphics
         init.resolution.width = m_Args.GetWidth();
         init.resolution.height = m_Args.GetHeight();
         init.resolution.reset = BGFX_RESET_VSYNC;
+        init.callback = new Callbacks();
+
         if(!bgfx::init(init))
         {
             AFEX_LOG_ERROR("(RenderThread) bgfx::init failed");

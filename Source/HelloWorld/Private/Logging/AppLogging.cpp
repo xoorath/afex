@@ -35,7 +35,7 @@ namespace HelloWorld
     {
         const spdlog::filename_t destination = SPDLOG_FILENAME_T("logs/afex.log");
         spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(destination);
-        sink->set_level(spdlog::level::info);
+        sink->set_level(spdlog::level::trace);
         return sink;
     }
 
@@ -63,7 +63,8 @@ namespace HelloWorld
         char date_buf[64] = {0};
         std::strftime(date_buf, sizeof(date_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
 
-        AFEX_LOG_INFO("({}) Logging has been configured.", date_buf);
+        AFEX_LOG_INFO("({}) Logging has been configured."
+        "============================================================", date_buf);
 
     }
 

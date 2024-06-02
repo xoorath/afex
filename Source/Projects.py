@@ -28,11 +28,15 @@ def GetAllProjects() -> list[ProjectBase]:
             directory="Engine/Graphics",
             engine_dependencies=[EngineDependency(name="Core")],
             conan_dependencies=[
-            # bgfx does not support static linkage. The graphics library will be responsible for
-            # linking bgfx in and exporting functionality required by other modules.
-            ConanDependency(
-                    require="bgfx/cci.20230216",
-                    cmake_name = "bgfx::bgfx"
+                # bgfx does not support static linkage. The graphics library will be responsible for
+                # linking bgfx in and exporting functionality required by other modules.
+                ConanDependency(
+                        require="bgfx/cci.20230216",
+                        cmake_name = "bgfx::bgfx"
+                ),
+                ConanDependency(
+                    require="bimg/cci.20230114",
+                    cmake_name = "bimg::bimg"
                 )
             ]
         ),

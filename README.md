@@ -1,6 +1,6 @@
 # AFEX
 
-License: [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) ([Local Copy](./LICENSE.txt))
+License: [CC BY-NC 4.0](./Documentation/License.CC%20BY-NC%204.0.md) OR [MIT](./Documentation/License.MIT.md)
 
 # Documentation
 
