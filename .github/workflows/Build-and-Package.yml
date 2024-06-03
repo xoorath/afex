@@ -74,6 +74,7 @@ jobs:
         Configuration: ${{ matrix.build_type }}
 
     - name: Package.py (${{ matrix.build_type }})
+      if: github.event_name == 'workflow_dispatch' # we only create packages when manually running
       run: python Package.py -c ${{ matrix.build_type }}
 
     - name: Create archives (windows)
