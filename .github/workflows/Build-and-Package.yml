@@ -43,21 +43,19 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v5.1.0
       with:
-        python-version: 3.*
+        python-version: '>=3.11 <=3.12'
+        cache: 'pip'
 
     - name: get-cmake
       uses: lukka/get-cmake@v3.29.3
       with:
-        cmakeVersion: 3.*
+        cmakeVersion: "^3.25.0"
 
     - name: Conan Profile Detect
       run: conan profile detect --force
 
-    - name: Show Conan Profile
-      run: conan profile show
-
-    - name: Setup.py (generate projects)
-      run: python Setup.py
+    - name: Setup.py (${{ matrix.build_type }})
+      run: python Setup.py -c ${{ matrix.build_type }}
 
     - name: Setup MSBuild
       if: runner.os == 'Windows'
@@ -72,6 +70,7 @@ jobs:
         Configuration: ${{ matrix.build_type }}
 
     - name: Save build artifacts
+      if: github.event_name == 'workflow_dispatch'
       uses: actions/upload-artifact@v3
       with:
         name: build-artifacts-${{ matrix.build_type }}

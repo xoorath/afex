@@ -1,3 +1,4 @@
+import argparse
 import os
 from Source.Projects import *
 from DevEnvironment.ProjectDefinition import EngineProject, GameProject
@@ -9,7 +10,15 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_DIR = os.path.join(SCRIPT_DIR, TEMP_DIR_NAME)
 # Build config support is an involved topic - you need to support configs in CMake
 # and map them to optimization levels in Conan.
-BUILD_CONFIGS = ["Debug", "Release"]
+POSSIBLE_CONFIGS = ["Debug", "Release"]
+
+parser = argparse.ArgumentParser(
+    prog="Package.py",
+    description="AFEX packaging script."
+)
+parser.add_argument("-c", "--configs", nargs='+', choices=POSSIBLE_CONFIGS, default=POSSIBLE_CONFIGS)
+args = parser.parse_args()
+gBuildConfigs = args.configs
 
 def GetConanTempDir(buildType : str):
     return os.path.join(TEMP_DIR, f"Conan_{buildType}")
@@ -19,7 +28,7 @@ def GetCMakeTempDir(buildType : str):
 
 def SetupDirectories():
     os.makedirs(TEMP_DIR, exist_ok=True)
-    for buildType in BUILD_CONFIGS:
+    for buildType in gBuildConfigs:
         os.makedirs(GetConanTempDir(buildType), exist_ok=True)
         os.makedirs(GetCMakeTempDir(buildType), exist_ok=True)
 
@@ -35,24 +44,25 @@ def SetupConan(buildType : str):
     import subprocess
     import glob
 
+    conanTempDir = GetConanTempDir(buildType)
+    conanfile = os.path.join(SCRIPT_DIR, "Source", "conanfile.py")
+
     for project in ALL_PROJECTS:
-        conanTempDir = GetConanTempDir(buildType)
         presetsFiles = glob.glob(os.path.join(SCRIPT_DIR, "Source", project.directory, "**" ,"CMakePresets.json"))
         for presetsFile in presetsFiles:
             if os.path.exists(presetsFile) and os.path.isfile(presetsFile):
                 os.remove(presetsFile)
 
-        conanfile = os.path.join(SCRIPT_DIR, "Source", "conanfile.py")
-        completedProcess = subprocess.run(["conan",
-                        "install", conanfile,
-                        "-of", conanTempDir,
-                        "-s", f"build_type={buildType}",
-                        "--build=missing",
-                        "--deployer=full_deploy", 
-                        f"--deployer-folder={GetCMakeTempDir(buildType)}"], 
-                        check=True) 
-        if completedProcess.returncode != 0:
-            PrintError(f"conan exited with code {completedProcess.returncode}\nconanfile: {conanfile}")
+    completedProcess = subprocess.run(["conan",
+                    "install", conanfile,
+                    "-of", conanTempDir,
+                    "-s", f"build_type={buildType}",
+                    "--build=missing",
+                    "--deployer=full_deploy", 
+                    f"--deployer-folder={GetCMakeTempDir(buildType)}"], 
+                    check=True) 
+    if completedProcess.returncode != 0:
+        PrintError(f"conan exited with code {completedProcess.returncode}\nconanfile: {conanfile}")
 
 def GenerateProjectCMakeLists(project: ProjectBase):
     CMakeListsPath = os.path.join(SCRIPT_DIR, "Source", project.directory, "CMakeLists.txt")
@@ -273,13 +283,13 @@ EndSection("Generate CMakeLists.txt")
 ################################################################################
 BeginSection("conan")
 
-for buildType in BUILD_CONFIGS:
+for buildType in gBuildConfigs:
     BeginSection(f"conan - {buildType.lower()}")
     SetupConan(buildType)
     EndSection(f"conan - {buildType.lower()}")
 
 BeginSection("Fixup CMakePresets")
-for buildType in BUILD_CONFIGS:
+for buildType in gBuildConfigs:
     FixupCMakeUserPresets(buildType)
 EndSection("fixup CMakePresets")
 
@@ -288,7 +298,7 @@ EndSection("conan")
 ################################################################################
 BeginSection("cmake")
 
-for buildType in BUILD_CONFIGS:
+for buildType in gBuildConfigs:
     BeginSection(f"cmake - {buildType.lower()}")
     SetupCMake(buildType)
     EndSection(f"cmake - {buildType.lower()}")
@@ -297,7 +307,7 @@ EndSection("cmake")
 
 ################################################################################
 BeginSection("link setup")
-for buildType in BUILD_CONFIGS:
+for buildType in gBuildConfigs:
     SetupLinks(buildType)
 
 EndSection("link setup")

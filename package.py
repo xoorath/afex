@@ -4,12 +4,13 @@ import shutil
 import pefile
 import fnmatch
 from DevEnvironment.BuildFormatting import BeginSection, EndSection, PrintContext, PrintError
+from Source.Projects import GetAllProjects, GameProject
 
 # Easily Configurable:
 TEMP_DIR_NAME = "Generated"
 PROJECT_ROOTS = [ "Source" ]
 POSSIBLE_CONFIGS = ["Debug", "Release"]
-POSSIBLE_TARGETS = ["HelloWorld", "TowerDefense"]
+POSSIBLE_TARGETS = [project.name for project in GetAllProjects() if isinstance(project, GameProject)]
 
 # Advanced:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
