@@ -101,6 +101,7 @@ jobs:
 
     - name: Package the output
       run: |
+        &pip install -r DevEnvironment/pip-requirements.txt
         &python Package.py -c ${{ matrix.build_type }}
         $basePath = "Generated/Packages"
         $packages = Get-ChildItem -Path $basePath -Directory
