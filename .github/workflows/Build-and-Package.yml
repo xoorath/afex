@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build_and_package:
     strategy:
       fail-fast: false
       matrix:
@@ -69,45 +69,8 @@ jobs:
         SolutionPath: Generated/CMake_${{ matrix.build_type }}/Source.sln
         Configuration: ${{ matrix.build_type }}
 
-    - name: Save build artifacts
-      if: github.event_name == 'workflow_dispatch'
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-artifacts-${{ matrix.build_type }}
-        path: Generated/CMake_${{ matrix.build_type }}
-
-  package:
-    if: github.event_name == 'workflow_dispatch'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest]
-        build_type: [Debug, Release]
-    needs: build
-    runs-on: ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: build-artifacts-${{ matrix.build_type }}  # Change this if you want to package Debug artifacts as well
-        path: Generated/CMake_${{ matrix.build_type }}
-
-    - name: Setup Python
-      uses: actions/setup-python@v5.1.0
-      with:
-        python-version: 3.*
-
-    - name: Pip install
-      run: |
-        &pip install -r DevEnvironment/pip-requirements.txt
-
-    - name: Package.py (${{ matrix.build_type }})
-      run: |
-        &python Package.py -c ${{ matrix.build_type }}
-        
-    - name: Create archives
+    - name: Create archives (windows)
+      if: github.event_name == 'workflow_dispatch' && runner.os == 'Windows' # we only create packages when manually running
       run: |
         $basePath = "Generated/Packages"
         $projects = Get-ChildItem -Path $basePath -Directory
@@ -115,12 +78,32 @@ jobs:
             $projName = $project.Name
             $packagePath = Join-Path -Path $basePath -ChildPath $projName ${{ matrix.build_type }}
             $outputPath = "$projName.${{ matrix.build_type }}.zip"
-            Compress-Archive -Path "$packagePath/*" -DestinationPath $outputPath
+            Compress-Archive -Path "$packagePath/*" -DestinationPath $outputPath -CompressionLevel Optimal 
             Write-Host "Packaged $packagePath into $outputPath"
         }
 
+    - name: Create archives (unix)
+      if: github.event_name == 'workflow_dispatch' && runner.os != 'Windows' # we only create packages when manually running
+      run: |
+        basePath="Generated/Packages"
+        projects=$(find "$basePath" -mindepth 1 -maxdepth 1 -type d)
+        for project in $projects; do
+            projName=$(basename "$project")
+            packagePath="$basePath/$projName/${{ matrix.build_type }}"
+            outputPath="$projName.${{ matrix.build_type }}.zip"
+            zip -r "$outputPath" "$packagePath"
+            echo "Packaged $packagePath into $outputPath"
+        done
+
     - name: Upload package artifacts
-      uses: actions/upload-artifact@v3
+      if: github.event_name == 'workflow_dispatch' # we only create packages when manually running
+      uses: actions/upload-artifact@v4
       with:
-        name: packages
         path: '*.zip'
+        if-no-files-found: error
+        # No compression, the packages are already compressed
+        # We may wish to improve the compression in the Create archives step later.
+        compression-level: 0
+        # Shorten the retention days. We do not use GitHub for hosting important artifacts.
+        # Download your artifacts and retain them in our build server and/or releases tab.
+        retention-days: 30
