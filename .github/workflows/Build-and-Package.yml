@@ -56,7 +56,7 @@ jobs:
     - name: Show Conan Profile
       run: conan profile show
 
-    - name: Run Python script
+    - name: Setup.py (generate projects)
       run: python Setup.py
 
     - name: Setup MSBuild
@@ -93,21 +93,29 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: build-artifacts-${{ matrix.build_type }}  # Change this if you want to package Debug artifacts as well
+        path: Generated/CMake_${{ matrix.build_type }}
 
     - name: Setup Python
       uses: actions/setup-python@v5.1.0
       with:
         python-version: 3.*
 
-    - name: Package the output
+    - name: Pip install
       run: |
         &pip install -r DevEnvironment/pip-requirements.txt
+
+    - name: Package.py (${{ matrix.build_type }})
+      run: |
         &python Package.py -c ${{ matrix.build_type }}
+        
+    - name: Create archives
+      run: |
         $basePath = "Generated/Packages"
-        $packages = Get-ChildItem -Path $basePath -Directory
-        foreach ($package in $packages) {
-            $packagePath = Join-Path -Path $basePath -ChildPath $package.Name
-            $outputPath = "$package.Name.zip"
+        $projects = Get-ChildItem -Path $basePath -Directory
+        foreach ($project in $projects) {
+            $projName = $project.Name
+            $packagePath = Join-Path -Path $basePath -ChildPath $projName ${{ matrix.build_type }}
+            $outputPath = "$projName.${{ matrix.build_type }}.zip"
             Compress-Archive -Path "$packagePath/*" -DestinationPath $outputPath
             Write-Host "Packaged $packagePath into $outputPath"
         }
