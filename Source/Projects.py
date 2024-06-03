@@ -69,8 +69,8 @@ def GetAllProjects() -> list[ProjectBase]:
         ),
         
         GameProject(
-            name="TowerDefense",
-            directory="TowerDefense",
+            name="Donsol",
+            directory="Donsol",
             engine_dependencies=[
                 EngineDependency(name="Core"),
                 EngineDependency(name="Platform"),

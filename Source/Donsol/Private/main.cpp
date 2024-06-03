@@ -13,13 +13,13 @@
 
 int main() {
     // Configure SPD first. This will let the logging macros from Core/Logging output consistently. 
-    TowerDefense::ConfigureLogging();
+    Donsol::ConfigureLogging();
 
     AFEX_LOG_INFO("Welcome to spdlog from main!");
 
     if(Platform::Window::GlobalInit())
     {
-        std::unique_ptr<Platform::Window> appWindow = std::make_unique<Platform::Window>(1920, 1080, "TowerDefense");
+        std::unique_ptr<Platform::Window> appWindow = std::make_unique<Platform::Window>(1920, 1080, "Donsol");
         if(appWindow->IsValid())
         {
             appWindow->GetKeyboardMutable().OnKeyEvent() += 
@@ -43,5 +43,5 @@ int main() {
         }
         Platform::Window::GlobalShutdown();
     }
-    TowerDefense::ShutdownLogging();
+    Donsol::ShutdownLogging();
 }

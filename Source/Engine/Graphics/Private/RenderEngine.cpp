@@ -1,16 +1,15 @@
 #include <Graphics/RenderEngine.h>
 
 // Graphics
+#include "bgfxCallbacks.h"
 #include "Event.h"
 #include "Logo.h"
-
-// Graphics
-#include "bgfxCallbacks.h"
 
 // Engine
 #include <Core/Assert.h>
 #include <Core/CommonMacros.h>
 #include <Core/Logging.h>
+#include <Graphics/DebugMode.h>
 
 // External
 #include <bgfx/bgfx.h>
@@ -40,15 +39,20 @@ namespace Graphics
         bool IsValid() const { return m_Valid; }
 
         void Resize(uint32_t width, uint32_t height);
+        void SetDebugMode(DebugMode mode);
 
     private:
+        // Event queue
         bx::DefaultAllocator m_QueueAllocator;
         bx::SpScUnboundedQueue m_RenderThreadEvents;
 
+        // Event data cache
+        DebugMode m_DebugMode;
+
+        // Lifetime management
         bx::Thread m_RenderThread;
-        
-        const RenderEngineArgs m_Args;
-        bool m_Valid;
+        const RenderEngineArgs m_Args;  // used during setup
+        bool m_Valid;                   // used during setup
     };
 
     ////////////////////////////////////////////////////////////////////////// RenderEngineArgs public
@@ -133,10 +137,16 @@ namespace Graphics
         reinterpret_cast<RenderEngineImpl*>(m_PIMPL)->Resize(width, height);
     }
 
+    /*GRAPHICS_EXPORT*/ void RenderEngine::SetDebugMode(DebugMode mode)
+    {
+    reinterpret_cast<RenderEngineImpl*>(m_PIMPL)->SetDebugMode(mode);
+    }
+
     ////////////////////////////////////////////////////////////////////////// internal
     RenderEngineImpl::RenderEngineImpl(const RenderEngineArgs& args)
         : m_QueueAllocator()
         , m_RenderThreadEvents(&m_QueueAllocator)
+        , m_DebugMode(DebugMode::Default)
         , m_RenderThread()
         , m_Args(args)
         , m_Valid(false)
@@ -196,7 +206,7 @@ namespace Graphics
         }
 
         constexpr bgfx::ViewId k_ClearView = 0;
-        bgfx::setViewClear(k_ClearView, 0, BGFX_CLEAR_COLOR);
+        bgfx::setViewClear(k_ClearView, BGFX_CLEAR_COLOR, 0x1a1111ff);
         bgfx::setViewRect(k_ClearView, 0, 0, bgfx::BackbufferRatio::Equal);
 
         uint32_t width = m_Args.GetWidth();
@@ -232,6 +242,13 @@ namespace Graphics
                         delete resizeEvent;
                         break;
                     }
+                    case EventType::DebugMode:
+                    {
+                        DebugModeEvent* debugModeEvent = reinterpret_cast<DebugModeEvent*>(ev);
+                        m_DebugMode = debugModeEvent->GetDebugMode();
+                        delete debugModeEvent;
+                        break;
+                    }
                     default:
                     {
                         delete ev;
@@ -241,18 +258,41 @@ namespace Graphics
             }
 
             bgfx::touch(k_ClearView);
-
             bgfx::dbgTextClear();
             bgfx::dbgTextImage(
-                /*x=*/      static_cast<uint16_t>((width/2/k_DbgTextWidth) ),
-                /*y=*/      static_cast<uint16_t>((height/2/k_DbgTextHeight)),
+                /*x=*/      static_cast<uint16_t>(bx::max((int32_t)(width/2/k_DbgTextWidth) - (int32_t)(Logo::k_ImageWidth/2), 0)),
+                /*y=*/      static_cast<uint16_t>(bx::max((int32_t)(height/2/k_DbgTextHeight) - (int32_t)(Logo::k_ImageHeight/2), 0)),
                 /*width=*/  static_cast<uint16_t>(Logo::k_ImageWidth),
                 /*height=*/ static_cast<uint16_t>(Logo::k_ImageHeight),
                 /*data=*/   Logo::k_ImageData,
                 /*pitch=*/  static_cast<uint16_t>(Logo::k_BufferBytesPerPixel * Logo::k_BufferWidth)
             );
 
-            bgfx::setDebug(BGFX_DEBUG_TEXT);
+            const bgfx::Stats* stats = bgfx::getStats();
+            bgfx::dbgTextPrintf(0, 0, 0x0f, "[F1] None  [F2] Text  [F3] Stats  [F4] Wireframe  [F5] Profiler");
+            bgfx::dbgTextPrintf(0, 1, 0x0f, "Color can be changed with ANSI \x1b[9;me\x1b[10;ms\x1b[11;mc\x1b[12;ma\x1b[13;mp\x1b[14;me\x1b[0m code too.");
+            bgfx::dbgTextPrintf(80, 1, 0x0f, "\x1b[;0m    \x1b[;1m    \x1b[; 2m    \x1b[; 3m    \x1b[; 4m    \x1b[; 5m    \x1b[; 6m    \x1b[; 7m    \x1b[0m");
+            bgfx::dbgTextPrintf(80, 2, 0x0f, "\x1b[;8m    \x1b[;9m    \x1b[;10m    \x1b[;11m    \x1b[;12m    \x1b[;13m    \x1b[;14m    \x1b[;15m    \x1b[0m");
+            bgfx::dbgTextPrintf(0, 2, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters.", stats->width, stats->height, stats->textWidth, stats->textHeight);
+
+            switch(m_DebugMode)
+            {
+            default:
+            case DebugMode::None:
+                break;
+            case DebugMode::Profiler:
+                bgfx::setDebug(BGFX_DEBUG_PROFILER);
+                break;
+            case DebugMode::Stats:
+                bgfx::setDebug(BGFX_DEBUG_STATS);
+                break;
+            case DebugMode::Text:
+                bgfx::setDebug(BGFX_DEBUG_TEXT);
+                break;
+            case DebugMode::Wireframe:
+                bgfx::setDebug(BGFX_DEBUG_WIREFRAME);
+                break;
+            }
             bgfx::frame();
         }
 
@@ -263,5 +303,10 @@ namespace Graphics
     void RenderEngineImpl::Resize(uint32_t width, uint32_t height)
     {
         m_RenderThreadEvents.push(new ResizeEvent(width, height));
+    }
+
+    void RenderEngineImpl::SetDebugMode(DebugMode mode)
+    {
+        m_RenderThreadEvents.push(new DebugModeEvent(mode));
     }
 }

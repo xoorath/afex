@@ -8,6 +8,8 @@
 
 namespace Graphics
 {
+    enum class DebugMode : uint8_t;
+
     // RenderEngineArgs should be provided during render engine startup
     class RenderEngineArgs
     {
@@ -48,10 +50,13 @@ namespace Graphics
         GRAPHICS_EXPORT void Shutdown();
 
         // Only one thread is permitted to submit render calls.
-        // Whichever thread that is should call RenderFrame when rendering is complete.
+        // Whichever thread that is should call RenderFrame when rendering is complete for the frame.
         GRAPHICS_EXPORT void RenderFrame() const;
 
+        // (thread safe) signals the render engine to resize the render target
         GRAPHICS_EXPORT void Resize(uint32_t width, uint32_t height);
+        // (thread safe) sets the bgfx debug mode
+        GRAPHICS_EXPORT void SetDebugMode(DebugMode mode);
 
         RenderEngine(const RenderEngine&) = delete;
         RenderEngine& operator=(const RenderEngine&) = delete;

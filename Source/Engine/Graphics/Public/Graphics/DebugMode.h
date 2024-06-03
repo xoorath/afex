@@ -1,0 +1,19 @@
+#pragma once
+
+// System
+#include <cstdint>
+
+//////////////////////////////////////////////////////////////////////////
+namespace Graphics
+{
+    //////////////////////////////////////////////////////////////////////////
+    enum class DebugMode : uint8_t
+    {
+        None,
+        Profiler,
+        Stats,
+        Text,
+        Wireframe,
+        Default = None
+    };
+}

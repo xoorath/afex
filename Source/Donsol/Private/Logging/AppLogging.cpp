@@ -13,7 +13,7 @@
 #include <ctime>
 #include <mutex>
 
-namespace TowerDefense
+namespace Donsol
 {
     ////////////////////////////////////////////////////////////////////////// static
     static spdlog::sink_ptr CreateSink_MSVC()

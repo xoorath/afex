@@ -1,7 +1,7 @@
 #pragma once
 
 //////////////////////////////////////////////////////////////////////////
-namespace TowerDefense
+namespace Donsol
 {
     void ConfigureLogging();
     void ShutdownLogging();

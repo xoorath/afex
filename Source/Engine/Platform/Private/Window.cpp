@@ -7,6 +7,7 @@
 #include <Core/Assert.h>
 #include <Core/Logging.h>
 #include <Graphics/RenderEngine.h>
+#include <Graphics/DebugMode.h>
 
 // External
 #include <GLFW/glfw3.h>
@@ -36,6 +37,34 @@ namespace Platform
             glfwSetWindowUserPointer(window, reinterpret_cast<void*>(&m_GLFWwindowUserData));
 
             glfwGetWindowSize(window, &m_PreviousWidth, &m_PreviousHeight);
+
+            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Text);
+            m_Keyboard.OnKeyEvent().Add([this](KeyCode key, int32_t scanCode, KeyboardAction action, int32_t modifiers)
+            {
+                AFEX_UNUSED(scanCode);
+                AFEX_UNUSED(modifiers);
+                if(action == KeyboardAction::Press)
+                {
+                    switch(key)
+                    {
+                        case KeyCode::F1:
+                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::None);
+                            break;
+                        case KeyCode::F2:
+                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Text);
+                            break;
+                        case KeyCode::F3:
+                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Stats);
+                            break;
+                        case KeyCode::F4:
+                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Wireframe);
+                            break;
+                        case KeyCode::F5:
+                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Profiler);
+                            break;
+                    }
+                }
+            });
         }
 
         ~WindowImpl()
@@ -62,11 +91,6 @@ namespace Platform
         inline bool CloseRequested() const
         {
             return glfwWindowShouldClose(m_Window);
-        }
-
-        inline void Clear()
-        {
-
         }
 
         inline void RenderFrame()
@@ -198,8 +222,6 @@ namespace Platform
             width,
             height
         );
-        
-        
 
         Graphics::RenderEngine renderEngine(renderEngineArgs);
 
