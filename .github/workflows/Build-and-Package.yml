@@ -27,7 +27,7 @@ jobs:
 
     - name: Pip install
       run: |
-        pip install -r DevEnvironment/pip-requirements.txt
+        pip install -r DevEnvironment/requirements.txt
 
     - name: Setup Conan
       uses: jwidauer/setup-conan@v1
