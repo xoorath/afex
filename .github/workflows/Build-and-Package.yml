@@ -106,6 +106,7 @@ jobs:
       if: github.event_name == 'workflow_dispatch' # we only create packages when manually running
       uses: actions/upload-artifact@v4
       with:
+        name: ${{ runner.os }}-${{ matrix.build_type }}
         path: '*.zip'
         if-no-files-found: error
         # No compression, the packages are already compressed
