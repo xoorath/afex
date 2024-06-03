@@ -19,6 +19,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Setup Python & pip
+      uses: actions/setup-python@v5.1.0
+      with:
+        python-version: '>=3.11 <=3.12'
+        cache: 'pip'
+
     - name: Setup Conan
       uses: jwidauer/setup-conan@v1
       with:
@@ -39,12 +45,6 @@ jobs:
         key: ${{ matrix.os }}-${{ matrix.build_type }}-conan-${{ hashFiles('Source/Projects.py') }}
         restore-keys: |
           ${{ matrix.os }}-${{ matrix.build_type }}-conan-
-
-    - name: Setup Python
-      uses: actions/setup-python@v5.1.0
-      with:
-        python-version: '>=3.11 <=3.12'
-        cache: 'pip'
 
     - name: get-cmake
       uses: lukka/get-cmake@v3.29.3
