@@ -64,10 +64,13 @@ jobs:
     - name: Build Source.sln (${{ matrix.build_type }})
       if: runner.os == 'Windows'
       run: |
-        msbuild Generated/CMake_${{ matrix.build_type }}/Source.sln /p:Configuration=${{ matrix.build_type }} /p:Platform="x64"
+        msbuild Generated/CMake_${{ matrix.build_type }}/Source.sln /p:Configuration=${{ matrix.build_type }} /p:Platform="x64" /m
       env:
         SolutionPath: Generated/CMake_${{ matrix.build_type }}/Source.sln
         Configuration: ${{ matrix.build_type }}
+
+    - name: Package.py (${{ matrix.build_type }})
+      run: python Package.py -c ${{ matrix.build_type }}
 
     - name: Create archives (windows)
       if: github.event_name == 'workflow_dispatch' && runner.os == 'Windows' # we only create packages when manually running
