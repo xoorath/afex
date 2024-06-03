@@ -39,13 +39,13 @@ jobs:
       id: conan-cache-location
       run: |
         $cacheLocation = conan config home | Out-String
-        Write-Host "::set-output name=cache-location::$cacheLocation"
+        "cache-location=$cacheLocation" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         
     - name: Cache Conan packages
       id: cache-conan
       uses: actions/cache@v3
       with:
-        path: ${{ steps.conan-cache-location.outputs.cache-location }}
+        path: ${{ env.cache-location }}
         key: ${{ matrix.os }}-${{ matrix.build_type }}-conan-${{ hashFiles('Source/Projects.py') }}
         restore-keys: |
           ${{ matrix.os }}-${{ matrix.build_type }}-conan-
