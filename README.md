@@ -1,4 +1,4 @@
-![AFEX Logo](Documentation/Logo.png)
+![AFEX Logo](./Documentation/Logo.png)
 
 [![Build and Package](https://github.com/xoorath/afex/actions/workflows/Build-and-Package.yml/badge.svg?event=workflow_dispatch)](https://github.com/xoorath/afex/actions/workflows/Build-and-Package.yml)
 
