@@ -3,6 +3,8 @@
 // System
 #include <cstdint>
 
+struct ImGuiContext;
+
 //////////////////////////////////////////////////////////////////////////
 namespace Graphics
 {
@@ -14,7 +16,7 @@ namespace Graphics
         ImGuiRenderer(ImGuiRenderer&&) noexcept;
         ImGuiRenderer& operator=(ImGuiRenderer&&) noexcept;
         ~ImGuiRenderer();
-        void Init(uint32_t width, uint32_t height);
+        void Init(ImGuiContext* context, uint32_t width, uint32_t height);
         void Shutdown();
 
         void BeginFrame() const;

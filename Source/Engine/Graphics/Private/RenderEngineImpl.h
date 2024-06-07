@@ -7,9 +7,6 @@
 #include <Graphics/RenderEngineArgs.h>
 
 // External
-#include <bgfx/bgfx.h>
-#include <bgfx/platform.h>
-#include <bx/bx.h>
 #include <bx/handlealloc.h>
 #include <bx/spscqueue.h>
 #include <bx/thread.h>

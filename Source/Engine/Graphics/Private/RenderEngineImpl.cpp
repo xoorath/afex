@@ -3,7 +3,7 @@
 // Graphics
 #include "bgfxCallbacks.h"
 #include "Event.h"
-#include "imguiRenderer.h"
+#include "ImguiRenderer.h"
 #include "Logo.h"
 
 // Engine
@@ -12,6 +12,11 @@
 #include <Core/Logging.h>
 #include <Graphics/DebugMode.h>
 #include <Graphics/RenderEngineArgs.h>
+
+// External
+#include <bgfx/bgfx.h>
+#include <bgfx/platform.h>
+#include <bx/bx.h>
 
 // System
 #include <atomic>
@@ -113,7 +118,7 @@ namespace Graphics
             return -1;
         }
 
-        m_ImguiRenderer.Init(m_Args.GetWidth(), m_Args.GetHeight());
+        m_ImguiRenderer.Init(m_Args.GetImguiContext(), m_Args.GetWidth(), m_Args.GetHeight());
         m_InitSemaphore.post();
 
         constexpr bgfx::ViewId k_ClearView = 0;

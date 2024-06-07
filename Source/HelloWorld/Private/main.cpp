@@ -32,6 +32,15 @@ int main()
 
     constexpr uint32_t k_Width = 1920;
     constexpr uint32_t k_Height = 1080;
+    ImGuiContext* imguiContext = ImGui::CreateContext();
+    if (imguiContext == nullptr)
+    {
+        AFEX_LOG_ERROR("Failed to create imgui context");
+        ImGui::DestroyContext(imguiContext);
+        HelloWorld::ShutdownLogging();
+        return -200;
+    }
+
     std::unique_ptr<Platform::Window> appWindow;
     {
         Platform::WindowArgs windowArgs(
@@ -42,6 +51,7 @@ int main()
         if (!appWindow->IsValid())
         {
             Platform::Window::GlobalShutdown();
+            ImGui::DestroyContext(imguiContext);
             HelloWorld::ShutdownLogging();
             return -200;
         }
@@ -50,6 +60,7 @@ int main()
     {
         Graphics::RenderEngineArgs renderArgs(
             /*nativeWindowHandle=*/ appWindow->GetNativeWindowHandle(),
+            /*imguiContext=*/       imguiContext,
             /*width=*/              k_Width,
             /*height=*/             k_Height);
         renderEngine = std::make_unique<Graphics::RenderEngine>(renderArgs);
@@ -57,6 +68,7 @@ int main()
         {
             appWindow.reset();
             Platform::Window::GlobalShutdown();
+            ImGui::DestroyContext(imguiContext);
             HelloWorld::ShutdownLogging();
             return -300;
         }
@@ -90,5 +102,6 @@ int main()
 
     appWindow.reset();
     Platform::Window::GlobalShutdown();
+    ImGui::DestroyContext(imguiContext);
     HelloWorld::ShutdownLogging();
 }

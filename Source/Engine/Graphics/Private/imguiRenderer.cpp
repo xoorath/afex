@@ -1,4 +1,4 @@
-#include "imguiRenderer.h"
+#include "ImguiRenderer.h"
 
 // Engine
 #include <Graphics/ViewId.h>
@@ -77,7 +77,7 @@ namespace Graphics
     class ImGuiRendererImpl
     {
     public:
-        ImGuiRendererImpl(uint32_t width, uint32_t height);
+        ImGuiRendererImpl(ImGuiContext* context, uint32_t width, uint32_t height);
         ~ImGuiRendererImpl();
 
         void BeginFrame() const;
@@ -115,9 +115,9 @@ namespace Graphics
         Shutdown();
     }
 
-    void ImGuiRenderer::Init(uint32_t width, uint32_t height)
+    void ImGuiRenderer::Init(ImGuiContext* context, uint32_t width, uint32_t height)
     {
-        m_PIMPL = reinterpret_cast<void*>(new ImGuiRendererImpl(width, height));
+        m_PIMPL = reinterpret_cast<void*>(new ImGuiRendererImpl(context, width, height));
     }
 
     void ImGuiRenderer::Shutdown()
@@ -142,8 +142,8 @@ namespace Graphics
     }
 
     ////////////////////////////////////////////////////////////////////////// internal
-    ImGuiRendererImpl::ImGuiRendererImpl(uint32_t displayWidth, uint32_t displayHeight)
-        : m_ImguiContext(ImGui::CreateContext())
+    ImGuiRendererImpl::ImGuiRendererImpl(ImGuiContext* context, uint32_t displayWidth, uint32_t displayHeight)
+        : m_ImguiContext(context)
     {
         ImGuiIO& io = ImGui::GetIO();
 
@@ -195,7 +195,6 @@ namespace Graphics
         safeDestroyHandle(m_FontUniform);
         safeDestroyHandle(m_FontTexture);
         safeDestroyHandle(m_Program);
-        ImGui::DestroyContext(m_ImguiContext);
     }
 
     void ImGuiRendererImpl::BeginFrame() const

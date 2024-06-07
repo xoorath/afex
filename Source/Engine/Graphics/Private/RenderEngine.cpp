@@ -1,20 +1,7 @@
 #include <Graphics/RenderEngine.h>
 
 // Graphics
-#include "bgfxCallbacks.h"
-#include "Event.h"
-#include "imguiRenderer.h"
-#include "Logo.h"
 #include "RenderEngineImpl.h"
-
-
-// Engine
-#include <Graphics/RenderEngineArgs.h>
-
-
-// System
-#include <atomic>
-#include <limits>
 
 //////////////////////////////////////////////////////////////////////////
 namespace Graphics

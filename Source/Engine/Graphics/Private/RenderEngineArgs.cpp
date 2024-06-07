@@ -1,9 +1,16 @@
 #include <Graphics/RenderEngineArgs.h>
 
+//////////////////////////////////////////////////////////////////////////
 namespace Graphics
 {
-    /*GRAPHICS_EXPORT*/ RenderEngineArgs::RenderEngineArgs(void* nativeWindowHandle, uint32_t width, uint32_t height)
+    ////////////////////////////////////////////////////////////////////////// Public
+    /*GRAPHICS_EXPORT*/ RenderEngineArgs::RenderEngineArgs(
+        void* nativeWindowHandle,
+        ImGuiContext* imguiContext,
+        uint32_t width,
+        uint32_t height)
         : m_NativeWindowHandle(nativeWindowHandle)
+        , m_ImguiContext(imguiContext)
         , m_Width(width)
         , m_Height(height)
     {
@@ -16,17 +23,23 @@ namespace Graphics
     /*GRAPHICS_EXPORT*/ RenderEngineArgs& RenderEngineArgs::operator=(RenderEngineArgs&&) noexcept = default;
     /*GRAPHICS_EXPORT*/ RenderEngineArgs::~RenderEngineArgs() = default;
 
-    /*internal*/ void* RenderEngineArgs::GetNativeWindowHandle() const
+    ////////////////////////////////////////////////////////////////////////// Internal
+    void* RenderEngineArgs::GetNativeWindowHandle() const
     {
         return m_NativeWindowHandle;
     }
 
-    /*internal*/ uint32_t RenderEngineArgs::GetWidth() const
+    ImGuiContext* RenderEngineArgs::GetImguiContext() const
+    {
+        return m_ImguiContext;
+    }
+
+    uint32_t RenderEngineArgs::GetWidth() const
     {
         return m_Width;
     }
 
-    /*internal*/ uint32_t RenderEngineArgs::GetHeight() const
+    uint32_t RenderEngineArgs::GetHeight() const
     {
         return m_Height;
     }
