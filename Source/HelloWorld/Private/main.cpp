@@ -1,4 +1,4 @@
-// Tower Defense
+// Hello World
 #include "./Logging/AppLogging.h"
 
 // Engine

@@ -32,7 +32,10 @@ namespace Graphics
     struct ResizeEvent
     {
     public:
-        ResizeEvent(uint32_t width, uint32_t height) : m_Width(width), m_Height(height) { }
+        ResizeEvent(uint32_t width, uint32_t height) 
+            : m_Type(EventType::Resize)
+            , m_Width(width)
+            , m_Height(height) { }
         ResizeEvent()                                       = default;
         ResizeEvent(const ResizeEvent&)                     = default;
         ResizeEvent(ResizeEvent&&) noexcept                 = default;
@@ -48,10 +51,13 @@ namespace Graphics
         uint32_t m_Height = 0;
     };
 
+    //////////////////////////////////////////////////////////////////////////
     struct DebugModeEvent
     {
     public:
-        explicit DebugModeEvent(DebugMode mode) : m_DebugMode(mode) { }
+        explicit DebugModeEvent(DebugMode mode) 
+            : m_Type(EventType::DebugMode)
+            , m_DebugMode(mode) { }
         DebugModeEvent()                                        = default;
         DebugModeEvent(const DebugModeEvent&)                   = default;
         DebugModeEvent(DebugModeEvent&&) noexcept               = default;
@@ -64,6 +70,4 @@ namespace Graphics
         EventType m_Type = EventType::DebugMode;
         DebugMode m_DebugMode = DebugMode::Default;
     };
-
-
 }
