@@ -29,7 +29,7 @@ namespace Graphics
         return m_NativeWindowHandle;
     }
 
-    ImGuiContext* RenderEngineArgs::GetImguiContext() const
+    ImGuiContext* RenderEngineArgs::GetImguiContextMutable() const
     {
         return m_ImguiContext;
     }

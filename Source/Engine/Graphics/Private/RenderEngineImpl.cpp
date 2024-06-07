@@ -118,7 +118,7 @@ namespace Graphics
             return -1;
         }
 
-        m_ImguiRenderer.Init(m_Args.GetImguiContext(), m_Args.GetWidth(), m_Args.GetHeight());
+        m_ImguiRenderer.Init(m_Args.GetImguiContextMutable(), m_Args.GetWidth(), m_Args.GetHeight());
         m_InitSemaphore.post();
 
         constexpr bgfx::ViewId k_ClearView = 0;

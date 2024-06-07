@@ -33,5 +33,10 @@ namespace Graphics
         void captureEnd() override final;
         void captureFrame(const void* data, uint32_t size) override final;
         void traceVargs(const char* filePath, uint16_t line, const char* format, va_list argList) override final;
+
+        void SetEnableTrace(bool value) { m_EnableTrace = value; }
+
+    private:
+        bool m_EnableTrace = false;
     };
 }

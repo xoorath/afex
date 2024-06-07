@@ -45,22 +45,25 @@ namespace Graphics
 
     void Callbacks::traceVargs(const char* filePath, uint16_t line, const char* format, va_list argList) /*override final*/
     {
-        char temp[2048];
-        char* out = temp;
-        va_list argListCopy;
-        va_copy(argListCopy, argList);
-        va_end(argListCopy);
-        int32_t total = bx::vsnprintf(out, sizeof(temp)-1, format, argList);
-        out[total] = '\0';
-        // trim off any newline (bgfx tends to end messages with newlines)
-        if(out[total-1] == '\n')
+        if(m_EnableTrace)
         {
-            out[total-1] = '\0';
-        }
-        spdlog::source_loc loc(filePath, line, __FUNCTION__);
+            char temp[2048];
+            char* out = temp;
+            va_list argListCopy;
+            va_copy(argListCopy, argList);
+            va_end(argListCopy);
+            int32_t total = bx::vsnprintf(out, sizeof(temp)-1, format, argList);
+            out[total] = '\0';
+            // trim off any newline (bgfx tends to end messages with newlines)
+            if(out[total-1] == '\n')
+            {
+                out[total-1] = '\0';
+            }
+            spdlog::source_loc loc(filePath, line, __FUNCTION__);
         
-        auto logger = Core::g_Logger;
-        logger->log(loc, spdlog::level::trace, "{}", out);
+            auto logger = Core::g_Logger;
+            logger->log(loc, spdlog::level::trace, "{}", out);
+        }
     }
 
     void Callbacks::profilerBegin(const char* name, uint32_t abgr, const char* filePath, uint16_t line) /*override final*/

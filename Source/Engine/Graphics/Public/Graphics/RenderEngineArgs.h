@@ -34,7 +34,7 @@ namespace Graphics
 
     /*internal:*/
         void* GetNativeWindowHandle() const;
-        ImGuiContext* GetImguiContext() const;
+        ImGuiContext* GetImguiContextMutable() const;
         uint32_t GetWidth() const;
         uint32_t GetHeight() const;
     private:
