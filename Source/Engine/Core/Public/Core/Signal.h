@@ -67,6 +67,12 @@ namespace Core
             }
         }
 
+        operator bool() const
+        {
+            std::lock_guard<std::mutex> lock(m_Mutex);
+            return m_Funcs.size() > 0;
+        }
+
     private:
         mutable std::mutex m_Mutex;
         FuncList m_Funcs;

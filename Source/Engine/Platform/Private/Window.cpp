@@ -6,8 +6,6 @@
 // Engine
 #include <Core/Assert.h>
 #include <Core/Logging.h>
-#include <Graphics/RenderEngine.h>
-#include <Graphics/DebugMode.h>
 
 // External
 #include <GLFW/glfw3.h>
@@ -21,56 +19,48 @@
 //////////////////////////////////////////////////////////////////////////
 namespace Platform
 {
+    //////////////////////////////////////////////////////////////////////////  WindowArgs public
+    /*PLATFORM_EXPORT*/ WindowArgs::WindowArgs(std::string_view title, uint32_t width, uint32_t height)
+        : m_Title(title)
+        , m_Width(width)
+        , m_Height(height)
+    {
+    }
+
+    /*PLATFORM_EXPORT*/ WindowArgs::WindowArgs()                                    = default;
+    /*PLATFORM_EXPORT*/ WindowArgs::WindowArgs(const WindowArgs&)                   = default;
+    /*PLATFORM_EXPORT*/ WindowArgs& WindowArgs::operator=(const WindowArgs&)        = default;
+    /*PLATFORM_EXPORT*/ WindowArgs::WindowArgs(WindowArgs&&) noexcept               = default;
+    /*PLATFORM_EXPORT*/ WindowArgs& WindowArgs::operator=(WindowArgs&&) noexcept    = default;
+    /*PLATFORM_EXPORT*/ WindowArgs::~WindowArgs()                                   = default;
+
+    //////////////////////////////////////////////////////////////////////////  WindowArgs internal
+    const std::string& WindowArgs::GetTitle() const { return m_Title; }
+    uint32_t WindowArgs::GetWidth() const { return m_Width; }
+    uint32_t WindowArgs::GetHeight() const { return m_Height; }
+
     ////////////////////////////////////////////////////////////////////////// internal
     class WindowImpl
     {
 
     public:
-        explicit WindowImpl(GLFWwindow* window, Graphics::RenderEngine&& engine)
+        explicit WindowImpl(GLFWwindow* window)
             : m_Window(window)
             , m_Keyboard(m_Window)
             , m_GLFWwindowUserData(m_Keyboard)
-            , m_RenderEngine(std::move(engine))
         {
             AFEX_ASSERT(m_Window != nullptr);
 
             glfwSetWindowUserPointer(window, reinterpret_cast<void*>(&m_GLFWwindowUserData));
 
-            glfwGetWindowSize(window, &m_PreviousWidth, &m_PreviousHeight);
-
-            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Text);
-            m_Keyboard.OnKeyEvent().Add([this](KeyCode key, int32_t scanCode, KeyboardAction action, int32_t modifiers)
-            {
-                AFEX_UNUSED(scanCode);
-                AFEX_UNUSED(modifiers);
-                if(action == KeyboardAction::Press)
-                {
-                    switch(key)
-                    {
-                        case KeyCode::F1:
-                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::None);
-                            break;
-                        case KeyCode::F2:
-                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Text);
-                            break;
-                        case KeyCode::F3:
-                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Stats);
-                            break;
-                        case KeyCode::F4:
-                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Wireframe);
-                            break;
-                        case KeyCode::F5:
-                            m_RenderEngine.SetDebugMode(Graphics::DebugMode::Profiler);
-                            break;
-                    }
-                }
-            });
+            int width, height;
+            glfwGetWindowSize(m_Window, &width, &height);
+            m_PreviousWidth = static_cast<uint32_t>(width);
+            m_PreviousHeight = static_cast<uint32_t>(height);
         }
 
         ~WindowImpl()
         {
-            // Manually shutdown the render engine to ensure it happens before the window is destroyed.
-            m_RenderEngine.Shutdown();
             glfwDestroyWindow(m_Window);
         }
 
@@ -81,7 +71,7 @@ namespace Platform
             AFEX_LOG_ERROR("GLFW Error ({}): {}", error_code, description);
         }
 
-        static inline WindowImpl* Create(uint32_t width, uint32_t height, const char* title);
+        static inline WindowImpl* Create(const WindowArgs& args);
 
         inline void RequestClose()
         {
@@ -93,23 +83,23 @@ namespace Platform
             return glfwWindowShouldClose(m_Window);
         }
 
-        inline void RenderFrame()
-        {
-            int width, height;
-            glfwGetWindowSize(m_Window, &width, &height);
-            if(m_PreviousWidth != width or m_PreviousHeight != height)
-            {
-                m_PreviousWidth = width;
-                m_PreviousHeight = height;
-                m_RenderEngine.Resize(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
-            }
-
-            m_RenderEngine.RenderFrame();
-        }
-
         inline void PollEvents()
         {
             glfwPollEvents();
+
+            if(m_ResizeCallback)
+            {
+                int width, height;
+                glfwGetWindowSize(m_Window, &width, &height);
+                uint32_t newWidth = static_cast<uint32_t>(width);
+                uint32_t newHeight = static_cast<uint32_t>(height);
+                if(newWidth != m_PreviousWidth || newHeight != m_PreviousHeight)
+                {
+                    m_PreviousWidth = newWidth;
+                    m_PreviousHeight = newHeight;
+                    m_ResizeCallback.Invoke(m_PreviousWidth, m_PreviousHeight);
+                }
+            }
         }
 
         inline const Keyboard& GetKeyboard() const
@@ -122,18 +112,37 @@ namespace Platform
             return m_Keyboard;
         }
 
+        inline Keyboard::KeyCallbackType& OnKeyEvent()
+        {
+            return GetKeyboardMutable().OnKeyEvent();
+        }
+
+        inline Keyboard::CharCallbackType& OnCharEvent()
+        {
+            return GetKeyboardMutable().OnCharEvent();
+        }
+
+        inline Window::ResizeCallbackType& OnResize()
+        {
+            return m_ResizeCallback;
+        }
+
+        void* GetNativeWindowHandle() const
+        {
+            return glfwGetWin32Window(m_Window);
+        }
     private:
         // GLFW
         GLFWwindow* m_Window = nullptr;
 
-        // Graphics
-        Graphics::RenderEngine m_RenderEngine;
-        int m_PreviousWidth = 0;
-        int m_PreviousHeight = 0;
-
         // Engine
         Keyboard m_Keyboard;
         GLFWwindowUserData m_GLFWwindowUserData;
+
+        // Callbacks
+        Window::ResizeCallbackType m_ResizeCallback;
+        uint32_t m_PreviousWidth;
+        uint32_t m_PreviousHeight;
     };
 
     ////////////////////////////////////////////////////////////////////////// public static
@@ -162,10 +171,14 @@ namespace Platform
 
     ////////////////////////////////////////////////////////////////////////// public
 
-    /*PLATFORM_EXPORT*/ Window::Window(uint32_t width, uint32_t height, const char* title)
+    /*PLATFORM_EXPORT explicit*/ Window::Window(const WindowArgs& args)
     {
-        m_PIMPL = reinterpret_cast<void*>(WindowImpl::Create(width, height, title));
-        AFEX_LOG_TRACE("Window created {} ({}, {}, {}) ", (IsValid() ? "successfully" : "unsuccessfully"), width, height, title);
+        m_PIMPL = reinterpret_cast<void*>(WindowImpl::Create(args));
+        AFEX_LOG_TRACE("Window created {} ({}, {}, {}) "
+        , (IsValid() ? "successfully" : "unsuccessfully")
+        , args.GetWidth()
+        , args.GetHeight()
+        , args.GetTitle().c_str());
     }
 
     /*PLATFORM_EXPORT*/ Window::~Window()
@@ -184,11 +197,6 @@ namespace Platform
         return reinterpret_cast<WindowImpl*>(m_PIMPL)->CloseRequested();
     }
 
-    /*PLATFORM_EXPORT*/ void Window::RenderFrame()
-    {
-        reinterpret_cast<WindowImpl*>(m_PIMPL)->RenderFrame();
-    }
-
     /*PLATFORM_EXPORT*/ void Window::PollEvents()
     {
         reinterpret_cast<WindowImpl*>(m_PIMPL)->PollEvents();
@@ -204,33 +212,45 @@ namespace Platform
         return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetKeyboardMutable();
     }
 
+    /*PLATFORM_EXPORT*/ Keyboard::KeyCallbackType& Window::OnKeyEvent()
+    {
+        return reinterpret_cast<WindowImpl*>(m_PIMPL)->OnKeyEvent();
+    }
+
+    /*PLATFORM_EXPORT*/ Keyboard::CharCallbackType& Window::OnCharEvent()
+    {
+        return reinterpret_cast<WindowImpl*>(m_PIMPL)->OnCharEvent();
+    }
+
+    /*PLATFORM_EXPORT*/ Window::ResizeCallbackType& Window::OnResize()
+    {
+        return reinterpret_cast<WindowImpl*>(m_PIMPL)->OnResize();
+    }
+
+    /*PLATFORM_EXPORT*/ void* Window::GetNativeWindowHandle() const
+    {
+        return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetNativeWindowHandle();
+    }
+
     ////////////////////////////////////////////////////////////////////////// internal implementation
 
-    /*static inline*/ WindowImpl* WindowImpl::Create(uint32_t width, uint32_t height, const char* title)
+    /*static inline*/ WindowImpl* WindowImpl::Create(const WindowArgs& args)
     {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-        GLFWwindow* glfwWindow = glfwCreateWindow(width, height, title, NULL, NULL);
+        GLFWwindow* const glfwWindow = glfwCreateWindow(
+            /*width=*/      args.GetWidth(),
+            /*height=*/     args.GetHeight(),
+            /*title=*/      args.GetTitle().c_str(),
+            /*monitor=*/    nullptr,
+            /*share=*/      nullptr);
+
         AFEX_ASSERT_MSG(glfwWindow != nullptr, "glfwCreateWindow failed");
         if (glfwWindow == nullptr)
         {
             return nullptr;
         }
 
-        Graphics::RenderEngineArgs renderEngineArgs(
-            glfwGetWin32Window(glfwWindow),
-            width,
-            height
-        );
-
-        Graphics::RenderEngine renderEngine(renderEngineArgs);
-
-        if(renderEngine.IsValid() == false)
-        {
-            glfwDestroyWindow(glfwWindow);
-            return nullptr;
-        }
-        
-        return new WindowImpl(glfwWindow, std::move(renderEngine));
+        return new WindowImpl(glfwWindow);
     }
 }

@@ -7,13 +7,9 @@
 namespace Graphics
 {
     //////////////////////////////////////////////////////////////////////////
-    enum class DebugMode : uint8_t
+    namespace ViewId
     {
-        None,
-        Profiler,
-        Stats,
-        Text,
-        Wireframe,
-        Default = Text
-    };
+        constexpr uint16_t k_Clear = 0;
+        constexpr uint16_t k_ImGui = 0;
+    }
 }

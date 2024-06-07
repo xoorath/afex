@@ -2,12 +2,13 @@ import sys
 sys.path.append("..")
 from DevEnvironment.ProjectDefinition import *
 
-
+DearImGui=ConanDependency(require="imgui/1.90.7", cmake_name = "imgui::imgui", options=[ConanDependencyOption("shared", True)])
 
 # This method is where we define AFEX projects and their dependencies
 # It is used by the build and package system and can also be imported directly by our 
 # conanfiles to understand our targets and their dependencies
 def GetAllProjects() -> list[ProjectBase]:
+    global DearImGui
     return [
         ############################################################################### Engine components
         EngineProject(
@@ -31,13 +32,14 @@ def GetAllProjects() -> list[ProjectBase]:
                 # bgfx does not support static linkage. The graphics library will be responsible for
                 # linking bgfx in and exporting functionality required by other modules.
                 ConanDependency(
-                        require="bgfx/cci.20230216",
-                        cmake_name = "bgfx::bgfx"
+                    require="bgfx/cci.20230216",
+                    cmake_name = "bgfx::bgfx"
                 ),
                 ConanDependency(
                     require="bimg/cci.20230114",
                     cmake_name = "bimg::bimg"
-                )
+                ),
+                DearImGui
             ]
         ),
 
@@ -53,7 +55,8 @@ def GetAllProjects() -> list[ProjectBase]:
                     require="glfw/3.4",
                     cmake_find = "glfw3",
                     options=[ConanDependencyOption("shared", True)]
-                )
+                ),
+                DearImGui
             ]
         ),
 
