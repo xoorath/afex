@@ -3,6 +3,9 @@
 // Private
 #include "../GLFWwindowUserData.h"
 
+// Engine
+#include <Core/Assert.h>
+
 // External
 #include <GLFW/glfw3.h>
 
@@ -11,7 +14,7 @@ namespace Platform
     ////////////////////////////////////////////////////////////////////////// private static
     /*static*/ void Keyboard::GLFWkeyfunStatic(GLFWwindow* window, int key, int scancode, int action, int mods)
     {
-        GLFWwindowUserData* userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
+        auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
         userData->GetKeyboardMutable().GLFWkeyfun(key, scancode, action, mods);
     }
 
@@ -21,7 +24,8 @@ namespace Platform
     {
         if(m_Window != nullptr)
         {
-            glfwSetKeyCallback(m_Window, &Keyboard::GLFWkeyfunStatic);
+            AFEX_ASSERT_MSG(glfwSetKeyCallback(m_Window, &Keyboard::GLFWkeyfunStatic) == nullptr,
+                "Chaining existing callbacks is not implemented");
         }
     }
 
@@ -35,7 +39,6 @@ namespace Platform
 
     void Keyboard::GLFWkeyfun(int key, int scancode, int action, int mods)
     {
-        // KeyCode key, int32_t scanCode, KeyboardAction action, int32_t modifiers
         KeyboardAction kbAction;
         switch(action)
         {
@@ -48,6 +51,6 @@ namespace Platform
             static_cast<KeyCode>(key),
             static_cast<int32_t>(scancode),
             kbAction,
-            static_cast<int32_t>(mods));
+            static_cast<KeyboardModifier>(mods));
     }
 }

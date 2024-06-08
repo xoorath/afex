@@ -1,7 +1,9 @@
 [Home](./README.md) > Todo
 
+# Engine functionality
+* **(Priority high)** Add imgui input handling
+
 # Engine Architecture 
-* **(Priority high)** Fix and document the threading model
     * Currently hangs on close because of the busted semaphore architecture (for some reason only when no debugger is attached)
 * **(Priority mid)** Introduce dependency injection
 * **(Priority mid)** Decouple Graphics and Platform

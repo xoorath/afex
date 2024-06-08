@@ -10,6 +10,7 @@
 
 # Documentation
 
+* [AFEX Architecture](./Documentation/Architecture.md)
 * [Setting up a development environment](./Documentation/SetupDevEnv.md)
 * [Developer Workflow](./Documentation/DevWorkflow.md)
 

@@ -3,6 +3,7 @@
 #include <Platform/Platform.export.h>
 
 // Engine
+#include <Core/Flags.h>
 #include <Core/Signal.h>
 
 //////////////////////////////////////////////////////////////////////////
@@ -15,7 +16,7 @@ namespace Platform
     class WindowImpl;
 
     //////////////////////////////////////////////////////////////////////////
-    enum class KeyCode : int32_t
+    enum class KeyCode : uint16_t
     {
         /* Printable keys */
         Space = 32,
@@ -145,16 +146,28 @@ namespace Platform
     };
 
     //////////////////////////////////////////////////////////////////////////
-    enum class KeyboardAction
+    enum class KeyboardAction : uint8_t
     {
-        Press, Release, Repeat
+        Press = 0,
+        Release = 1,
+        Repeat = 2
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+    enum class KeyboardModifier : uint8_t
+    {
+        Control =   0x0002,
+        Alt =       0x0004,
+        Super =     0x0008,
+        CapsLock =  0x0010,
+        NumLock =   0x0020
     };
 
     //////////////////////////////////////////////////////////////////////////
     class Keyboard
     {
     public:
-        using KeyCallbackType = Core::Signal<void(KeyCode key, int32_t scanCode, KeyboardAction action, int32_t modifiers)>;
+        using KeyCallbackType = Core::Signal<void(KeyCode key, int32_t scanCode, KeyboardAction action, KeyboardModifier modifiers)>;
         using CharCallbackType = Core::Signal<void(uint64_t codepoint)>;
 
         PLATFORM_EXPORT KeyCallbackType& OnKeyEvent() { return m_KeyCallback; }
@@ -182,3 +195,5 @@ namespace Platform
         CharCallbackType m_CharCallback;
     };
 }
+
+AFEX_FLAGS_OPERATORS(Platform::KeyboardModifier)

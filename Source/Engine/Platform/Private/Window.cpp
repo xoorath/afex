@@ -7,6 +7,8 @@
 #include <Core/Assert.h>
 #include <Core/Logging.h>
 #include <Platform/WindowArgs.h>
+#include <Platform/HMI/Cursor.h>
+#include <Platform/HMI/Keyboard.h>
 
 //////////////////////////////////////////////////////////////////////////
 namespace Platform
@@ -66,14 +68,14 @@ namespace Platform
         return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetKeyboardMutable();
     }
 
-    /*PLATFORM_EXPORT*/ Keyboard::KeyCallbackType& Window::OnKeyEvent()
+    /*PLATFORM_EXPORT*/ const Cursor& Window::GetCursor() const
     {
-        return reinterpret_cast<WindowImpl*>(m_PIMPL)->OnKeyEvent();
+        return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetCursor();
     }
 
-    /*PLATFORM_EXPORT*/ Keyboard::CharCallbackType& Window::OnCharEvent()
+    /*PLATFORM_EXPORT*/ Cursor& Window::GetCursorMutable()
     {
-        return reinterpret_cast<WindowImpl*>(m_PIMPL)->OnCharEvent();
+        return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetCursorMutable();
     }
 
     /*PLATFORM_EXPORT*/ Window::ResizeCallbackType& Window::OnResize()
@@ -85,6 +87,4 @@ namespace Platform
     {
         return reinterpret_cast<const WindowImpl*>(m_PIMPL)->GetNativeWindowHandle();
     }
-
-    
 }

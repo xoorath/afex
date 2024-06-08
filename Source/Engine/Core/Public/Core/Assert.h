@@ -3,13 +3,42 @@
 // Core
 #include <Core/Core.export.h>
 #include <Core/CommonMacros.h>
+#include <Core/Logging.h>
 
 // System
 #include <format>
 #include <string>
 
+
 #if defined(_DEBUG)
+#define AFEX_ASSERT_ENABLED 1
+#else
+#define AFEX_ASSERT_ENABLED 0
+#endif
+
+#if AFEX_ASSERT_ENABLED
 //////////////////////////////////////////////////////////////////////////
+#define AFEX_ASSERT_FAIL(...)                                                                                   \
+    do                                                                                                          \
+    {                                                                                                           \
+        static bool alwaysIgnore = false;                                                                       \
+        if (!alwaysIgnore)                                                                                      \
+        {                                                                                                       \
+            Core::g_Logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},                        \
+                spdlog::level::critical,                                                                   \
+                std::format(                                                                                    \
+                    "Assert failed.\n"                                                                          \
+                    "{}",                                                                                       \
+                    std::format(__VA_ARGS__)));                                                                 \
+            switch(Core::Internal::HandleAssertion("AFEX_ASSERT_FAIL",  std::format(__VA_ARGS__)))              \
+            {                                                                                                   \
+                case Core::Internal::DevAssertionResponse::BreakInDebugger: { AFEX_DEBUG_BREAK(); break;}       \
+                case Core::Internal::DevAssertionResponse::IgnoreOnce:      { break;}                           \
+                case Core::Internal::DevAssertionResponse::IgnoreAlways:    { alwaysIgnore = true; break;}      \
+            }                                                                                                   \
+        }                                                                                                       \
+    }                                                                                                           \
+    while(false);
 #define AFEX_ASSERT_MSG(condition, ...)                                                                         \
     do                                                                                                          \
     {                                                                                                           \
@@ -20,7 +49,8 @@
         if (!((condition)) && !alwaysIgnore)                                                                    \
         _Pragma("warning(pop)")                                                                                 \
         {                                                                                                       \
-            Core::g_Logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, spdlog::level::err,    \
+            Core::g_Logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},                        \
+                spdlog::level::critical,                                                                   \
                 std::format(                                                                                    \
                     "Assert({}) failed.\n"                                                                      \
                     "{}",                                                                                       \
@@ -37,7 +67,8 @@
     while(false);
 #else
 //////////////////////////////////////////////////////////////////////////
-#define AFEX_ASSERT_MSG(condition, ...)                                                                             \
+#define AFEX_ASSERT_FAIL(...)
+#define AFEX_ASSERT_MSG(condition, ...)                                                                         \
     do                                                                                                          \
     {                                                                                                           \
         AFEX_UNUSED((condition));                                                                               \

@@ -1,6 +1,7 @@
 #include "bgfxCallbacks.h"
 
 // Engine
+#include <Core/Assert.h>
 #include <Core/Logging.h>
 
 // External
@@ -27,7 +28,6 @@ namespace Graphics
 
     void Callbacks::fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code, const char* str) /*override final*/
     {
-        auto logger = Core::g_Logger;
         spdlog::source_loc loc(filePath, line, __FUNCTION__);
 
         // Trim off any newline (bgfx tends to end messages with newlines)
@@ -40,7 +40,14 @@ namespace Graphics
             temp[len-1] = '\0';
         }
 
+#if AFEX_ASSERT_ENABLED
+        AFEX_ASSERT_FAIL("Fatal bgfx error: {} {}", CodeToStr(code), str);
+#else
+        auto logger = Core::g_Logger;
         logger->log(loc, spdlog::level::critical, "{}: {}", CodeToStr(code), str);
+#endif
+        
+
     }
 
     void Callbacks::traceVargs(const char* filePath, uint16_t line, const char* format, va_list argList) /*override final*/

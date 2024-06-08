@@ -5,6 +5,9 @@
 #include <Core/Assert.h>
 #include <Core/CommonMacros.h>
 #include <Core/Logging.h>
+#include <Platform/HMI/Cursor.h>
+#include <Platform/HMI/ImguiInputProvider.h>
+#include <Platform/HMI/Keyboard.h>
 #include <Platform/Window.h>
 #include <Platform/WindowArgs.h>
 #include <Graphics/DebugMode.h>
@@ -111,14 +114,25 @@ public:
                 });
         }
 
+        m_ImguiInputProvider = std::make_unique<Platform::ImGuiInputProvider>(
+            /*imguiContext=*/   m_ImguiContext, 
+            /*cursor=*/         m_Window->GetCursorMutable(),
+            /*keyboard=*/       m_Window->GetKeyboardMutable());
+        m_ShutdownProcedure.push_back(
+            [this]()
+            {
+                m_ImguiInputProvider.reset();
+            });
+
         m_Window->OnResize().Add(
             [this](uint32_t width, uint32_t height)
             {
                 m_RenderEngine->Resize(width, height);
+                m_ImguiRenderer->Resize(width, height);
             });
 
         m_Window->GetKeyboardMutable().OnKeyEvent() +=
-            [window = m_Window.get()](Platform::KeyCode key, int32_t scanCode, Platform::KeyboardAction action, int32_t modifiers)
+            [window = m_Window.get()](Platform::KeyCode key, int32_t scanCode, Platform::KeyboardAction action, Platform::KeyboardModifier modifiers)
             {
                 AFEX_UNUSED(scanCode);
                 AFEX_UNUSED(modifiers);
@@ -170,6 +184,7 @@ private:
     std::unique_ptr<Platform::Window> m_Window;
     std::unique_ptr<Graphics::RenderEngine> m_RenderEngine;
     std::unique_ptr<Graphics::ImGuiRenderer> m_ImguiRenderer;
+    std::unique_ptr<Platform::ImGuiInputProvider> m_ImguiInputProvider;
 
     // during destruction this vector will be iterated in reverse and invoked.
     std::vector<std::function<void()>> m_ShutdownProcedure;

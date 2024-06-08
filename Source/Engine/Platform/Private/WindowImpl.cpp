@@ -71,8 +71,9 @@ namespace Platform
 
     /*explicit*/ WindowImpl::WindowImpl(GLFWwindow* window)
         : m_Window(window)
+        , m_Cursor(m_Window)
         , m_Keyboard(m_Window)
-        , m_GLFWwindowUserData(m_Keyboard)
+        , m_GLFWwindowUserData(m_Cursor, m_Keyboard)
         , m_ResizeCallback()
         , m_PreviousWidth(0)
         , m_PreviousHeight(0)
@@ -132,14 +133,14 @@ namespace Platform
         return m_Keyboard;
     }
 
-    Keyboard::KeyCallbackType& WindowImpl::OnKeyEvent()
+    const Cursor& WindowImpl::GetCursor() const
     {
-        return GetKeyboardMutable().OnKeyEvent();
+        return m_Cursor;
     }
 
-    Keyboard::CharCallbackType& WindowImpl::OnCharEvent()
+    Cursor& WindowImpl::GetCursorMutable()
     {
-        return GetKeyboardMutable().OnCharEvent();
+        return m_Cursor;
     }
 
     Window::ResizeCallbackType& WindowImpl::OnResize()

@@ -4,6 +4,7 @@
 #include "GLFWwindowUserData.h"
 
 // Engine
+#include <Platform/HMI/Cursor.h>
 #include <Platform/HMI/Keyboard.h>
 #include <Platform/Window.h>
 
@@ -37,9 +38,9 @@ namespace Platform
 
         const Keyboard& GetKeyboard() const;
         Keyboard& GetKeyboardMutable();
+        const Cursor& GetCursor() const;
+        Cursor& GetCursorMutable();
 
-        Keyboard::KeyCallbackType& OnKeyEvent();
-        Keyboard::CharCallbackType& OnCharEvent();
         Window::ResizeCallbackType& OnResize();
 
         void* GetNativeWindowHandle() const;
@@ -48,6 +49,7 @@ namespace Platform
         GLFWwindow* m_Window = nullptr;
 
         // Engine
+        Cursor m_Cursor;
         Keyboard m_Keyboard;
         GLFWwindowUserData m_GLFWwindowUserData;
 

@@ -23,9 +23,9 @@ namespace Graphics
         ImGuiRenderer(const ImGuiRenderer&)             = delete;
         ImGuiRenderer& operator=(const ImGuiRenderer&)  = delete;
 
-        GRAPHICS_EXPORT void BeginFrame() const;
-        GRAPHICS_EXPORT void EndFrame() const;
-        GRAPHICS_EXPORT void Render() const; // <- Call from render thread
+        GRAPHICS_EXPORT void BeginFrame();
+        GRAPHICS_EXPORT void EndFrame();
+        GRAPHICS_EXPORT void Render(); // <- Call from render thread
 
         GRAPHICS_EXPORT void Resize(uint32_t width, uint32_t height);
 

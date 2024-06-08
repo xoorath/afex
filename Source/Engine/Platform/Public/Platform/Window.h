@@ -1,8 +1,8 @@
 #pragma once
 
 // Engine
+#include <Core/Signal.h>
 #include <Platform/Platform.export.h>
-#include <Platform/HMI/Keyboard.h>
 
 // System
 #include <cstdint>
@@ -11,6 +11,7 @@
 namespace Platform
 {
     class Keyboard;
+    class Cursor;
     class WindowArgs;
 
     //////////////////////////////////////////////////////////////////////////
@@ -40,10 +41,10 @@ namespace Platform
         // HMI:
         PLATFORM_EXPORT const Keyboard& GetKeyboard() const;
         PLATFORM_EXPORT Keyboard& GetKeyboardMutable();
+        PLATFORM_EXPORT const Cursor& GetCursor() const;
+        PLATFORM_EXPORT Cursor& GetCursorMutable();
 
         // Callbacks:
-        PLATFORM_EXPORT Keyboard::KeyCallbackType& OnKeyEvent();
-        PLATFORM_EXPORT Keyboard::CharCallbackType& OnCharEvent();
         PLATFORM_EXPORT ResizeCallbackType& OnResize();
 
         // Misc.
