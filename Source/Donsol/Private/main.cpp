@@ -7,16 +7,21 @@
 #include <Core/Logging.h>
 #include <Platform/Window.h>
 #include <Platform/WindowArgs.h>
+#include <Graphics/DebugMode.h>
+#include <Graphics/ImguiRenderer.h>
 #include <Graphics/RenderEngineArgs.h>
 #include <Graphics/RenderEngine.h>
 
+// External
+#include <imgui.h>
+
 // System
+#include <atomic>
 #include <cinttypes>
 #include <memory.h>
 #include <string_view>
+#include <vector>
 
-// External
-#include <imgui.h>
 
 static const char* k_AppName = "Donsol";
 class DonsolApp
@@ -26,13 +31,13 @@ public:
     {
         // Configure SPD first. This will let the logging macros from Core/Logging output consistently. 
         Donsol::ConfigureLogging();
-        m_ShutdownProcedure.push_front(&Donsol::ShutdownLogging);
+        m_ShutdownProcedure.push_back(&Donsol::ShutdownLogging);
 
         AFEX_LOG_INFO(__FUNCTION__ "()");
 
         if (Platform::Window::GlobalInit())
         {
-            m_ShutdownProcedure.push_front(&Platform::Window::GlobalShutdown);
+            m_ShutdownProcedure.push_back(&Platform::Window::GlobalShutdown);
         }
         else
         {
@@ -43,7 +48,7 @@ public:
         m_ImguiContext = ImGui::CreateContext();
         if (m_ImguiContext)
         {
-            m_ShutdownProcedure.push_front([ctx = m_ImguiContext]() { ImGui::DestroyContext(ctx); });
+            m_ShutdownProcedure.push_back([ctx = m_ImguiContext]() { ImGui::DestroyContext(ctx); });
         }
         else
         {
@@ -61,7 +66,7 @@ public:
             m_Window = std::make_unique<Platform::Window>(windowArgs);
             if (m_Window->IsValid())
             {
-                m_ShutdownProcedure.push_front([this]() { m_Window.reset(); });
+                m_ShutdownProcedure.push_back([this]() { m_Window.reset(); });
             }
             else
             {
@@ -79,7 +84,8 @@ public:
             m_RenderEngine = std::make_unique<Graphics::RenderEngine>(renderArgs);
             if (m_RenderEngine->IsValid())
             {
-                m_ShutdownProcedure.push_front([this]() { m_RenderEngine.reset(); });
+                m_ShutdownProcedure.push_back([this]() { m_RenderEngine.reset(); });
+                m_RenderEngine->SetDebugMode(Graphics::DebugMode::Text);
             }
             else
             {
@@ -88,11 +94,27 @@ public:
             }
         }
 
+        {
+            m_ImguiRenderer = std::make_unique<Graphics::ImGuiRenderer>(m_ImguiContext, k_Width, k_Height);
+
+            auto renderSubscription = m_RenderEngine->OnRender().Add(
+                [this]()
+                {
+                    m_ImguiRenderer->Render();
+                });
+
+            m_ShutdownProcedure.push_back(
+                [this, renderSubscription]()
+                {
+                    m_RenderEngine->OnRender().Remove(renderSubscription);
+                    m_ImguiRenderer.reset();
+                });
+        }
 
         m_Window->OnResize().Add(
-            [renderEngine = m_RenderEngine.get()](uint32_t width, uint32_t height)
+            [this](uint32_t width, uint32_t height)
             {
-                renderEngine->Resize(width, height);
+                m_RenderEngine->Resize(width, height);
             });
 
         m_Window->GetKeyboardMutable().OnKeyEvent() +=
@@ -112,9 +134,9 @@ public:
     ~DonsolApp()
     {
         AFEX_LOG_INFO(__FUNCTION__ "()");
-        for (auto proc : m_ShutdownProcedure)
+        for (auto it = m_ShutdownProcedure.rbegin(); it != m_ShutdownProcedure.rend(); ++it)
         {
-            proc();
+            (*it)();
         }
     }
 
@@ -124,15 +146,18 @@ public:
     {
         while (!m_Window->CloseRequested())
         {
+            // perform our update logic
             m_Window->PollEvents();
-            m_RenderEngine->BeginFrame();
+            m_ImguiRenderer->BeginFrame();
             {
                 ImGui::SetNextWindowSize(ImVec2(100, 100), ImGuiCond_Appearing);
                 ImGui::Begin(k_AppName);
-
                 ImGui::End();
             }
-            m_RenderEngine->EndFrame();
+            m_ImguiRenderer->EndFrame();
+
+            m_RenderEngine->SubmitFrame();
+            m_RenderEngine->WaitForRender();
         }
         return 0;
     }
@@ -144,8 +169,10 @@ private:
     ImGuiContext* m_ImguiContext = nullptr;
     std::unique_ptr<Platform::Window> m_Window;
     std::unique_ptr<Graphics::RenderEngine> m_RenderEngine;
+    std::unique_ptr<Graphics::ImGuiRenderer> m_ImguiRenderer;
 
-    std::list<std::function<void()>> m_ShutdownProcedure;
+    // during destruction this vector will be iterated in reverse and invoked.
+    std::vector<std::function<void()>> m_ShutdownProcedure;
 
     int32_t m_ErrorCode = 0;
 };
@@ -153,7 +180,6 @@ private:
 int main()
 {
     DonsolApp app;
-
     if (app.GetErrorCode() != 0)
     {
         return app.GetErrorCode();

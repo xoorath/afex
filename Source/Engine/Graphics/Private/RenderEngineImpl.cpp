@@ -3,7 +3,6 @@
 // Graphics
 #include "bgfxCallbacks.h"
 #include "Event.h"
-#include "ImguiRenderer.h"
 #include "Logo.h"
 
 // Engine
@@ -12,6 +11,7 @@
 #include <Core/Logging.h>
 #include <Graphics/DebugMode.h>
 #include <Graphics/RenderEngineArgs.h>
+#include <Graphics/ViewId.h>
 
 // External
 #include <bgfx/bgfx.h>
@@ -26,17 +26,17 @@
 namespace Graphics
 {
     ////////////////////////////////////////////////////////////////////////// internal
-    RenderEngineImpl::RenderEngineImpl(const RenderEngineArgs& args)
-        : m_ImguiRenderer()
-        , m_QueueAllocator()
+    /*explicit*/ RenderEngineImpl::RenderEngineImpl(const RenderEngineArgs& args)
+        : m_QueueAllocator()
         , m_RenderThreadEvents(&m_QueueAllocator)
         , m_DebugMode(DebugMode::Default)
         , m_RenderThread()
         , m_Args(args)
         , m_Valid(false)
         , m_InitSemaphore()
-        , m_MainToRenderSem()
-        , m_RenderToMainSem()
+        , m_SubmitFrameSemaphore()
+        , m_OnRender()
+        , m_MainFrameNuber(0)
     {
         // Call bgfx::renderFrame before bgfx::init to signal to bgfx not to create a render thread.
         // Most graphics APIs must be used on the same thread that created the window.
@@ -68,13 +68,13 @@ namespace Graphics
 
     RenderEngineImpl::~RenderEngineImpl()
     {
+        using namespace std::chrono_literals;
         if (m_RenderThread.isRunning())
         {
             m_RenderThreadEvents.push(new ExitEvent());
-            m_MainToRenderSem.post();
-            m_RenderToMainSem.wait();
             while (bgfx::RenderFrame::NoContext != bgfx::renderFrame(k_ShutdownTimeoutMilliseconds))
             {
+                m_SubmitFrameSemaphore.post();
             }
             m_RenderThread.shutdown();
             AFEX_ASSERT_MSG(m_RenderThread.getExitCode() == 0, "Render thread shutdown was not successful");
@@ -82,19 +82,16 @@ namespace Graphics
         }
     }
 
-    void RenderEngineImpl::BeginFrame() const
+    void RenderEngineImpl::SubmitFrame()
     {
-        m_ImguiRenderer.BeginFrame();
+        bgfx::renderFrame(k_RenderTimeoutMilliseconds);
+        m_SubmitFrameSemaphore.post();
+        m_MainFrameNuber += 1;
     }
 
-    void RenderEngineImpl::EndFrame() const
+    void RenderEngineImpl::WaitForRender()
     {
-        m_ImguiRenderer.EndFrame();
-        bgfx::renderFrame(k_RenderTimeoutMilliseconds);
-
-        // Create a sync point so we render and update once per frame
-        m_MainToRenderSem.post();
-        m_RenderToMainSem.wait();
+        m_RenderFrameSemaphore.wait();
     }
 
     /*static*/ int32_t RenderEngineImpl::StaticRenderThreadFunc(bx::Thread* thread, void* userData)
@@ -118,12 +115,10 @@ namespace Graphics
             return -1;
         }
 
-        m_ImguiRenderer.Init(m_Args.GetImguiContextMutable(), m_Args.GetWidth(), m_Args.GetHeight());
         m_InitSemaphore.post();
 
-        constexpr bgfx::ViewId k_ClearView = 0;
-        bgfx::setViewClear(k_ClearView, BGFX_CLEAR_COLOR, 0x1a1111ff);
-        bgfx::setViewRect(k_ClearView, 0, 0, bgfx::BackbufferRatio::Equal);
+        bgfx::setViewClear(Graphics::ViewId::k_Clear, BGFX_CLEAR_COLOR, 0x1a1111ff);
+        bgfx::setViewRect(Graphics::ViewId::k_Clear, 0, 0, bgfx::BackbufferRatio::Equal);
 
         uint32_t width = m_Args.GetWidth();
         uint32_t height = m_Args.GetHeight();
@@ -132,10 +127,12 @@ namespace Graphics
         const uint32_t k_DbgTextWidth = 8;
         const uint32_t k_DbgTextHeight = 16;
 
+        uint32_t renderFrameNumber = 0;
+
         bool exit = false;
         while (!exit)
         {
-            // This cast to EventType is relying on the fact that all true message types
+            // This cast to EventType is relying on the fact that all valid message types
             // have an EventType member as the first member. See Event.h for more info.
             while (EventType* ev = reinterpret_cast<EventType*>(m_RenderThreadEvents.pop()))
             {
@@ -152,7 +149,7 @@ namespace Graphics
                 {
                     ResizeEvent* resizeEvent = reinterpret_cast<ResizeEvent*>(ev);
                     bgfx::reset(resizeEvent->GetWidth(), resizeEvent->GetHeight(), BGFX_RESET_VSYNC);
-                    bgfx::setViewRect(k_ClearView, 0, 0, bgfx::BackbufferRatio::Equal);
+                    bgfx::setViewRect(Graphics::ViewId::k_Clear, 0, 0, bgfx::BackbufferRatio::Equal);
                     width = resizeEvent->GetWidth();
                     height = resizeEvent->GetHeight();
                     delete resizeEvent;
@@ -173,9 +170,7 @@ namespace Graphics
                 }
             }
 
-            m_ImguiRenderer.Render();
-
-            bgfx::touch(k_ClearView);
+            bgfx::touch(Graphics::ViewId::k_Clear);
             bgfx::dbgTextClear();
             bgfx::dbgTextImage(
                 /*x=*/      static_cast<uint16_t>(bx::max((int32_t)(width / 2 / k_DbgTextWidth) - (int32_t)(Logo::k_ImageWidth / 2), 0)),
@@ -187,7 +182,11 @@ namespace Graphics
             );
 
             const bgfx::Stats* stats = bgfx::getStats();
-            bgfx::dbgTextPrintf(0, 0, 0x0f, "[F1] None  [F2] Text  [F3] Stats  [F4] Wireframe  [F5] Profiler");
+
+            uint32_t mainThreadNumber = m_MainFrameNuber.load();
+            int32_t difference = static_cast<int32_t>(renderFrameNumber) - static_cast<int32_t>(mainThreadNumber);
+
+            bgfx::dbgTextPrintf(0, 0, 0x0f, "Render frame: %u  Game frame %u  (delta %i)", renderFrameNumber, mainThreadNumber, difference);
             bgfx::dbgTextPrintf(0, 1, 0x0f, "Color can be changed with ANSI \x1b[9;me\x1b[10;ms\x1b[11;mc\x1b[12;ma\x1b[13;mp\x1b[14;me\x1b[0m code too.");
             bgfx::dbgTextPrintf(80, 1, 0x0f, "\x1b[;0m    \x1b[;1m    \x1b[; 2m    \x1b[; 3m    \x1b[; 4m    \x1b[; 5m    \x1b[; 6m    \x1b[; 7m    \x1b[0m");
             bgfx::dbgTextPrintf(80, 2, 0x0f, "\x1b[;8m    \x1b[;9m    \x1b[;10m    \x1b[;11m    \x1b[;12m    \x1b[;13m    \x1b[;14m    \x1b[;15m    \x1b[0m");
@@ -212,16 +211,14 @@ namespace Graphics
                 break;
             }
 
-            bgfx::frame();
-
-            m_RenderToMainSem.post();
-            if (!exit)
-            {
-                m_MainToRenderSem.wait();
-            }
+            // wait until the main thread is done submitting draw calls
+            m_SubmitFrameSemaphore.wait();
+            // render everything that was submitted
+            m_OnRender.Invoke();
+            renderFrameNumber = bgfx::frame();
+            // post so the main thread can begin submitting render calls for a new frame
+            m_RenderFrameSemaphore.post();
         }
-
-        m_ImguiRenderer.Shutdown();
 
         bgfx::shutdown();
         return 0;

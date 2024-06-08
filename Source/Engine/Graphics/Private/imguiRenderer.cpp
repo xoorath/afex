@@ -1,4 +1,4 @@
-#include "ImguiRenderer.h"
+#include <Graphics/ImguiRenderer.h>
 
 // Engine
 #include <Graphics/ViewId.h>
@@ -93,50 +93,41 @@ namespace Graphics
     };
 
     ////////////////////////////////////////////////////////////////////////// public
-    ImGuiRenderer::ImGuiRenderer()
+    /*GRAPHICS_EXPORT*/ ImGuiRenderer::ImGuiRenderer(ImGuiContext* context, uint32_t width, uint32_t height)
+        : m_PIMPL(reinterpret_cast<void*>(new ImGuiRendererImpl(context, width, height)))
     {
     }
 
-    ImGuiRenderer::ImGuiRenderer(ImGuiRenderer&& other) noexcept
+    /*GRAPHICS_EXPORT*/ ImGuiRenderer::ImGuiRenderer(ImGuiRenderer&& other) noexcept
         : m_PIMPL(other.m_PIMPL)
     {
         other.m_PIMPL = nullptr;
     }
 
-    ImGuiRenderer& ImGuiRenderer::operator=(ImGuiRenderer&& other) noexcept
+    /*GRAPHICS_EXPORT*/ ImGuiRenderer& ImGuiRenderer::operator=(ImGuiRenderer&& other) noexcept
     {
         m_PIMPL = other.m_PIMPL;
         other.m_PIMPL = nullptr;
         return *this;
     }
 
-    ImGuiRenderer::~ImGuiRenderer()
-    {
-        Shutdown();
-    }
-
-    void ImGuiRenderer::Init(ImGuiContext* context, uint32_t width, uint32_t height)
-    {
-        m_PIMPL = reinterpret_cast<void*>(new ImGuiRendererImpl(context, width, height));
-    }
-
-    void ImGuiRenderer::Shutdown()
+    /*GRAPHICS_EXPORT*/ ImGuiRenderer::~ImGuiRenderer()
     {
         delete reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL);
-        m_PIMPL = nullptr;
     }
 
-    void ImGuiRenderer::BeginFrame() const
+
+    /*GRAPHICS_EXPORT*/ void ImGuiRenderer::BeginFrame() const
     {
         reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL)->BeginFrame();
     }
 
-    void ImGuiRenderer::EndFrame() const
+    /*GRAPHICS_EXPORT*/ void ImGuiRenderer::EndFrame() const
     {
         reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL)->EndFrame();
     }
 
-    void ImGuiRenderer::Render() const
+    /*GRAPHICS_EXPORT*/ void ImGuiRenderer::Render() const
     {
         reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL)->Render();
     }
@@ -144,6 +135,10 @@ namespace Graphics
     ////////////////////////////////////////////////////////////////////////// internal
     ImGuiRendererImpl::ImGuiRendererImpl(ImGuiContext* context, uint32_t displayWidth, uint32_t displayHeight)
         : m_ImguiContext(context)
+        , m_VertexLayout()
+        , m_FontTexture(bgfx::kInvalidHandle)
+        , m_FontUniform(bgfx::kInvalidHandle)
+        , m_Program(bgfx::kInvalidHandle)
     {
         ImGuiIO& io = ImGui::GetIO();
 
@@ -180,6 +175,15 @@ namespace Graphics
         bgfx::ShaderHandle vs = bgfx::createShader(bgfx::makeRef(vs_ocornut_imgui_dx11, vs_ocornut_imgui_dx11_len));
         bgfx::ShaderHandle fs = bgfx::createShader(bgfx::makeRef(fs_ocornut_imgui_dx11, fs_ocornut_imgui_dx11_len));
         m_Program = bgfx::createProgram(vs, fs, true);
+
+
+        bgfx::setViewClear(Graphics::ViewId::k_ImGui, BGFX_CLEAR_NONE);
+        bgfx::setViewRect(
+            /*viewId=*/     Graphics::ViewId::k_ImGui,
+            /*x=*/          0,
+            /*y=*/          0,
+            /*width=*/      static_cast<uint16_t>(displayWidth),
+            /*height=*/     static_cast<uint16_t>(displayHeight));
     }
 
     ImGuiRendererImpl::~ImGuiRendererImpl()
@@ -218,6 +222,8 @@ namespace Graphics
 
         bgfx::setViewName(Graphics::ViewId::k_ImGui, "ImGui");
         bgfx::setViewMode(Graphics::ViewId::k_ImGui, bgfx::ViewMode::Sequential);
+
+        bgfx::touch(Graphics::ViewId::k_ImGui);
 
         for (int32_t i = 0, num = drawData->CmdListsCount; i < num; ++i)
         {

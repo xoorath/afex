@@ -8,11 +8,9 @@
 #include <Core/Logging.h>
 #include <Platform/WindowArgs.h>
 
-
 //////////////////////////////////////////////////////////////////////////
 namespace Platform
 {
-
     ////////////////////////////////////////////////////////////////////////// public static
 
     /*PLATFORM_EXPORT static*/ bool Window::GlobalInit()
@@ -50,7 +48,7 @@ namespace Platform
 
     /*PLATFORM_EXPORT*/ bool Window::CloseRequested() const
     {
-        return reinterpret_cast<WindowImpl*>(m_PIMPL)->CloseRequested();
+        return reinterpret_cast<const WindowImpl*>(m_PIMPL)->CloseRequested();
     }
 
     /*PLATFORM_EXPORT*/ void Window::PollEvents()
@@ -85,7 +83,7 @@ namespace Platform
 
     /*PLATFORM_EXPORT*/ void* Window::GetNativeWindowHandle() const
     {
-        return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetNativeWindowHandle();
+        return reinterpret_cast<const WindowImpl*>(m_PIMPL)->GetNativeWindowHandle();
     }
 
     

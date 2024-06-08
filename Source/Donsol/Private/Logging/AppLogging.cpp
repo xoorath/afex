@@ -34,7 +34,7 @@ namespace Donsol
     static spdlog::sink_ptr CreateSink_File()
     {
         const spdlog::filename_t destination = SPDLOG_FILENAME_T("logs/afex.log");
-        spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(destination);
+        spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(destination, /*truncate=*/true);
         sink->set_level(spdlog::level::trace);
         return sink;
     }
@@ -70,6 +70,13 @@ namespace Donsol
 
     void ShutdownLogging()
     {
+        std::time_t now;
+        std::time(&now);
+        char date_buf[64] = { 0 };
+        std::strftime(date_buf, sizeof(date_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+
+        AFEX_LOG_INFO("({}) App is shutting down."
+            "============================================================", date_buf);
         spdlog::shutdown();
         Core::g_Logger.reset();
     }

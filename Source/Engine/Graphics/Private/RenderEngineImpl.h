@@ -1,9 +1,7 @@
 #pragma once
 
-// Graphics
-#include "imguiRenderer.h"
-
 // Engine
+#include <Graphics/RenderEngine.h>
 #include <Graphics/RenderEngineArgs.h>
 
 // External
@@ -11,6 +9,9 @@
 #include <bx/spscqueue.h>
 #include <bx/thread.h>
 #include <bx/semaphore.h>
+
+// System
+#include <atomic>
 
 namespace Graphics
 {
@@ -23,17 +24,17 @@ namespace Graphics
         static int32_t StaticRenderThreadFunc(bx::Thread* thread, void* userData);
         int32_t RenderThreadFunc();
 
-        void BeginFrame() const;
-        void EndFrame() const;
+        void SubmitFrame();
+        void WaitForRender();
 
         void Resize(uint32_t width, uint32_t height);
         void SetDebugMode(DebugMode mode);
 
+        RenderEngine::RenderCallback& OnRender() { return m_OnRender; }
+
         bool IsValid() const { return m_Valid; }
 
     private:
-        ImGuiRenderer m_ImguiRenderer;
-
         // Event queue
         bx::DefaultAllocator m_QueueAllocator;
         bx::SpScUnboundedQueue m_RenderThreadEvents;
@@ -48,8 +49,14 @@ namespace Graphics
 
         // Synchronization
         bx::Semaphore m_InitSemaphore;
-        mutable bx::Semaphore m_MainToRenderSem;
-        mutable bx::Semaphore m_RenderToMainSem;
+        bx::Semaphore m_SubmitFrameSemaphore;
+        bx::Semaphore m_RenderFrameSemaphore;
+
+        // Callbacks
+        RenderEngine::RenderCallback m_OnRender;
+
+        // misc.
+        std::atomic_uint32_t m_MainFrameNuber = 0;
 
         // Stack size, if zero is passed it will use OS default thread stack
         static constexpr uint32_t k_RenderThreadStackSize = 0;

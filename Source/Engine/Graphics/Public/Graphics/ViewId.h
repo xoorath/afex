@@ -10,6 +10,6 @@ namespace Graphics
     namespace ViewId
     {
         constexpr uint16_t k_Clear = 0;
-        constexpr uint16_t k_ImGui = 0;
+        constexpr uint16_t k_ImGui = 1;
     }
 }
