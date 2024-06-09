@@ -194,7 +194,7 @@ namespace Platform
                 io.AddMousePosEvent(xPos, yPos);
             });
 
-        m_CursorButtonSubscription = cursor.OnCursorButton().Add(
+        m_CursorButtonSubscription = cursor.OnMouseButton().Add(
             [](int button, int action, int mods)
             {
                 AFEX_UNUSED(mods);
@@ -215,6 +215,6 @@ namespace Platform
     {
         m_Keyboard.OnKeyEvent().Remove(m_KeyCallbackSubscription);
         m_Cursor.OnCursorPosition().Remove(m_CursorPositionSubscription);
-        m_Cursor.OnCursorButton().Remove(m_CursorButtonSubscription);
+        m_Cursor.OnMouseButton().Remove(m_CursorButtonSubscription);
     }
 }

@@ -11,6 +11,7 @@ namespace Graphics
 {
     enum class DebugMode : uint8_t;
     class RenderEngineArgs;
+    class RenderEngineImpl;
 
     // The RenderEngine manages our interactions with the rendering backend (bgfx)
     // and sets up the render thread.
@@ -44,6 +45,6 @@ namespace Graphics
         GRAPHICS_EXPORT RenderCallback& OnRender();
 
     private:
-        void* m_PIMPL = nullptr;
+        RenderEngineImpl* m_PIMPL = nullptr;
     };
 }

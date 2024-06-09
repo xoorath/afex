@@ -2,7 +2,9 @@
 
 // Engine
 #include <Platform/HMI/Cursor.h>
+#include <Platform/HMI/CursorCallbackTypes.h>
 #include <Platform/HMI/Keyboard.h>
+#include <Platform/HMI/KeyboardCallbackTypes.h>
 
 // System
 #include <array>
@@ -32,11 +34,11 @@ namespace Platform
         Cursor& m_Cursor;
         Keyboard& m_Keyboard;
 
-        Keyboard::KeyCallbackType::Token m_KeyCallbackSubscription;
+        KeyCallbackType::Token m_KeyCallbackSubscription;
         
-        Cursor::CursorPositionCallbackType::Token m_CursorPositionSubscription;
-        Cursor::CursorEnterCallbackType::Token m_CursorEnterSubscription;
-        Cursor::CursorButtonCallbackType::Token m_CursorButtonSubscription;
-        Cursor::CursorScrollCallbackType::Token m_CursorScrollSubscription;
+        CursorPositionCallbackType::Token m_CursorPositionSubscription;
+        CursorEnterCallbackType::Token m_CursorEnterSubscription;
+        MouseButtonCallbackType::Token m_CursorButtonSubscription;
+        ScrollCallbackType::Token m_CursorScrollSubscription;
     };
 }

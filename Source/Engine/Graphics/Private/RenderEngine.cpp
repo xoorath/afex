@@ -14,12 +14,12 @@ namespace Graphics
             delete impl;
             impl = nullptr;
         }
-        m_PIMPL = reinterpret_cast<void*>(impl);
+        m_PIMPL = impl;
     }
 
     /*GRAPHICS_EXPORT*/ RenderEngine::~RenderEngine()
     {
-        delete reinterpret_cast<RenderEngineImpl*>(m_PIMPL);
+        delete m_PIMPL;
     }
 
     /*GRAPHICS_EXPORT*/ RenderEngine::RenderEngine(RenderEngine&& other) noexcept
@@ -43,26 +43,26 @@ namespace Graphics
 
     /*GRAPHICS_EXPORT*/ void RenderEngine::SubmitFrame()
     {
-        reinterpret_cast<RenderEngineImpl*>(m_PIMPL)->SubmitFrame();
+        m_PIMPL->SubmitFrame();
     }
 
     /*GRAPHICS_EXPORT*/ void RenderEngine::WaitForRender()
     {
-        reinterpret_cast<RenderEngineImpl*>(m_PIMPL)->WaitForRender();
+        m_PIMPL->WaitForRender();
     }
 
     /*GRAPHICS_EXPORT*/ void RenderEngine::Resize(uint32_t width, uint32_t height)
     {
-        reinterpret_cast<RenderEngineImpl*>(m_PIMPL)->Resize(width, height);
+        m_PIMPL->Resize(width, height);
     }
 
     /*GRAPHICS_EXPORT*/ void RenderEngine::SetDebugMode(DebugMode mode)
     {
-        reinterpret_cast<RenderEngineImpl*>(m_PIMPL)->SetDebugMode(mode);
+        m_PIMPL->SetDebugMode(mode);
     }
 
     /*GRAPHICS_EXPORT*/ RenderEngine::RenderCallback& RenderEngine::OnRender()
     {
-        return reinterpret_cast<RenderEngineImpl*>(m_PIMPL)->OnRender();
+        return m_PIMPL->OnRender();
     }
 }

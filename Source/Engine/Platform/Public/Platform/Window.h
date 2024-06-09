@@ -13,6 +13,7 @@ namespace Platform
     class Keyboard;
     class Cursor;
     class WindowArgs;
+    class WindowImpl;
 
     //////////////////////////////////////////////////////////////////////////
     class Window
@@ -51,6 +52,6 @@ namespace Platform
         PLATFORM_EXPORT void* GetNativeWindowHandle() const;
 
     private:
-        void* m_PIMPL = nullptr;
+        WindowImpl* m_PIMPL = nullptr;
     };
 }

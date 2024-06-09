@@ -1,7 +1,9 @@
 #pragma once
 
 // Engine
+#include <Core/PIMPL.h>
 #include <Core/Signal.h>
+#include <Platform/HMI/CursorCallbackTypes.h>
 #include <Platform/Platform.export.h>
 
 //////////////////////////////////////////////////////////////////////////
@@ -11,25 +13,21 @@ typedef struct GLFWwindow GLFWwindow;
 //////////////////////////////////////////////////////////////////////////
 namespace Platform
 {
+    class CursorImpl;
+
     //////////////////////////////////////////////////////////////////////////
+    // The cursor HMI bundles together cursors, mouse buttons and scroll
+    // - the functionality we associate with computer mice.
     class Cursor
     {
     public:
-        using CursorPositionCallbackType = Core::Signal<void(float xPos, float yPos)>;
-        using CursorEnterCallbackType = Core::Signal<void(int entered)>;
-        using CursorButtonCallbackType = Core::Signal<void(int button, int action, int mods)>;
-        using CursorScrollCallbackType = Core::Signal<void(float xScroll, float yScroll)>;
-
         PLATFORM_EXPORT CursorPositionCallbackType& OnCursorPosition();
         PLATFORM_EXPORT CursorEnterCallbackType& OnCursorEnter();
-        PLATFORM_EXPORT CursorButtonCallbackType& OnCursorButton();
-        PLATFORM_EXPORT CursorScrollCallbackType& OnCursorScroll();
+        PLATFORM_EXPORT MouseButtonCallbackType& OnMouseButton();
+        PLATFORM_EXPORT ScrollCallbackType& OnScroll();
 
-    /*Internal:*/
-        void GLFWcursorposfun(double xpos, double ypos);
-        void GLFWcursorenterfun(int entered);
-        void GLFWmousebuttonfun(int button, int action, int mods);
-        void GLFWscrollfun(double xoffset, double yoffset);
+    /*internal:*/
+        CursorImpl* GetPIMPL(); // Exposed to be provided via glfw user data
     private:
         // Only the WindowImpl is allowed to create a Keyboard
         friend class WindowImpl;
@@ -46,6 +44,6 @@ namespace Platform
         Cursor(const Cursor&) = delete;
         Cursor& operator=(const Cursor&) = delete;
 
-        void* m_PIMPL;
+        Core::PIMPL<CursorImpl, 424> m_PIMPL;
     };
 }

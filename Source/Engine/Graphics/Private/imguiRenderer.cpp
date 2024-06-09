@@ -13,7 +13,7 @@ namespace Graphics
 {
     ////////////////////////////////////////////////////////////////////////// public
     /*GRAPHICS_EXPORT*/ ImGuiRenderer::ImGuiRenderer(ImGuiContext* context, uint32_t width, uint32_t height)
-        : m_PIMPL(reinterpret_cast<void*>(new ImGuiRendererImpl(context, width, height)))
+        : m_PIMPL(new ImGuiRendererImpl(context, width, height))
     {
     }
 
@@ -32,27 +32,26 @@ namespace Graphics
 
     /*GRAPHICS_EXPORT*/ ImGuiRenderer::~ImGuiRenderer()
     {
-        delete reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL);
+        delete m_PIMPL;
     }
-
 
     /*GRAPHICS_EXPORT*/ void ImGuiRenderer::BeginFrame()
     {
-        reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL)->BeginFrame();
+        m_PIMPL->BeginFrame();
     }
 
     /*GRAPHICS_EXPORT*/ void ImGuiRenderer::EndFrame()
     {
-        reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL)->EndFrame();
+        m_PIMPL->EndFrame();
     }
 
     /*GRAPHICS_EXPORT*/ void ImGuiRenderer::Render()
     {
-        reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL)->Render();
+        m_PIMPL->Render();
     }
 
     /*GRAPHICS_EXPORT*/ void ImGuiRenderer::Resize(uint32_t width, uint32_t height)
     {
-        reinterpret_cast<ImGuiRendererImpl*>(m_PIMPL)->Resize(width, height);
+        m_PIMPL->Resize(width, height);
     }
 }

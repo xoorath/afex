@@ -11,6 +11,8 @@ struct ImGuiContext;
 //////////////////////////////////////////////////////////////////////////
 namespace Graphics
 {
+    class ImGuiRendererImpl;
+
     //////////////////////////////////////////////////////////////////////////
     class ImGuiRenderer
     {
@@ -30,6 +32,6 @@ namespace Graphics
         GRAPHICS_EXPORT void Resize(uint32_t width, uint32_t height);
 
     private:
-        void* m_PIMPL = nullptr;
+        ImGuiRendererImpl* m_PIMPL = nullptr;
     };
 }

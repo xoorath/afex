@@ -3,9 +3,6 @@
 // Platform
 #include "../GLFWwindowUserData.h"
 
-// Engine
-#include <Core/Assert.h>
-
 // External
 #include <GLFW/glfw3.h>
 
@@ -17,19 +14,41 @@ namespace Platform
         : m_Window(window)
         , m_OnCursorPosition()
         , m_OnCursorEnter()
-        , m_OnCursorButton()
-        , m_OnCursorScroll()
+        , m_OnMouseButton()
+        , m_OnScroll()
     {
         if(m_Window != nullptr)
         {
-            AFEX_ASSERT_MSG(glfwSetCursorPosCallback(window, &CursorImpl::GLFWcursorposfunStatic) == nullptr,
-                "Chaining existing callbacks is not implemented");
-            AFEX_ASSERT_MSG(glfwSetCursorEnterCallback(window, &CursorImpl::GLFWcursorenterfunStatic) == nullptr,
-                "Chaining existing callbacks is not implemented");
-            AFEX_ASSERT_MSG(glfwSetMouseButtonCallback(window, &CursorImpl::GLFWmousebuttonfunStatic) == nullptr,
-                "Chaining existing callbacks is not implemented");
-            AFEX_ASSERT_MSG(glfwSetScrollCallback(window, &CursorImpl::GLFWscrollfunStatic) == nullptr,
-                "Chaining existing callbacks is not implemented");
+            glfwSetCursorPosCallback(window, 
+                [](GLFWwindow* window, double xpos, double ypos)
+                {
+                    auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
+                    auto self = reinterpret_cast<CursorImpl*>(userData->GetCursorPIMPL());
+                    self->GLFWcursorposfun(xpos, ypos);
+                });
+
+            glfwSetCursorEnterCallback(window, 
+                [](GLFWwindow* window, int entered)
+                {
+                    auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
+                    auto self = reinterpret_cast<CursorImpl*>(userData->GetCursorPIMPL());
+                    self->GLFWcursorenterfun(entered);
+                });
+
+            glfwSetMouseButtonCallback(window, 
+                [](GLFWwindow* window, int button, int action, int mods)
+                {
+                    auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
+                    auto self = reinterpret_cast<CursorImpl*>(userData->GetCursorPIMPL());
+                    self->GLFWmousebuttonfun(button, action, mods);
+                });
+            glfwSetScrollCallback(window, 
+                [](GLFWwindow* window, double xoffset, double yoffset)
+                {
+                    auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
+                    auto self = reinterpret_cast<CursorImpl*>(userData->GetCursorPIMPL());
+                    self->GLFWscrollfun(xoffset, yoffset);
+                });
         }
     }
 
@@ -44,29 +63,25 @@ namespace Platform
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////// Private static
-    /*static*/ void CursorImpl::GLFWcursorposfunStatic(GLFWwindow* window, double xpos, double ypos)
+    CursorImpl::CursorImpl(CursorImpl&& other) noexcept
+        : m_Window(other.m_Window)
+        , m_OnCursorPosition(std::move(other.m_OnCursorPosition))
+        , m_OnCursorEnter(std::move(other.m_OnCursorEnter))
+        , m_OnMouseButton(std::move(other.m_OnMouseButton))
+        , m_OnScroll(std::move(other.m_OnScroll))
     {
-        auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
-        userData->GetCursorMutable().GLFWcursorposfun(xpos, ypos);
+        other.m_Window = nullptr;
     }
 
-    /*static*/ void CursorImpl::GLFWcursorenterfunStatic(GLFWwindow* window, int entered)
+    CursorImpl& CursorImpl::operator=(CursorImpl&& other) noexcept
     {
-        auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
-        userData->GetCursorMutable().GLFWcursorenterfun(entered);
-    }
-
-    /*static*/ void CursorImpl::GLFWmousebuttonfunStatic(GLFWwindow* window, int button, int action, int mods)
-    {
-        auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
-        userData->GetCursorMutable().GLFWmousebuttonfun(button, action, mods);
-    }
-
-    /*static*/ void CursorImpl::GLFWscrollfunStatic(GLFWwindow* window, double xoffset, double yoffset)
-    {
-        auto userData = reinterpret_cast<GLFWwindowUserData*>(glfwGetWindowUserPointer(window));
-        userData->GetCursorMutable().GLFWscrollfun(xoffset, yoffset);
+        m_Window = other.m_Window;
+        m_OnCursorPosition = std::move(other.m_OnCursorPosition);
+        m_OnCursorEnter = std::move(other.m_OnCursorEnter);
+        m_OnMouseButton = std::move(other.m_OnMouseButton);
+        m_OnScroll = std::move(other.m_OnScroll);
+        other.m_Window = nullptr;
+        return *this;
     }
 
     ////////////////////////////////////////////////////////////////////////// Private
@@ -82,11 +97,11 @@ namespace Platform
 
     void CursorImpl::GLFWmousebuttonfun(int button, int action, int mods)
     {
-        m_OnCursorButton(button, action, mods);
+        m_OnMouseButton(button, action, mods);
     }
 
     void CursorImpl::GLFWscrollfun(double xoffset, double yoffset)
     {
-        m_OnCursorScroll(static_cast<float>(xoffset), static_cast<float>(yoffset));
+        m_OnScroll(static_cast<float>(xoffset), static_cast<float>(yoffset));
     }
 }

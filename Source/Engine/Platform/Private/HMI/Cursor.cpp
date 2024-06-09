@@ -12,65 +12,36 @@ namespace Platform
 
     ////////////////////////////////////////////////////////////////////////// Public
     /*explicit*/ Cursor::Cursor(GLFWwindow* window)
-        : m_PIMPL(new CursorImpl(window))
+        : m_PIMPL(window)
     {
     }
     
-    Cursor::Cursor(Cursor&& other) noexcept
-        : m_PIMPL(other.m_PIMPL)
+    Cursor::Cursor(Cursor&& other) noexcept = default;
+    Cursor& Cursor::operator=(Cursor&& other) noexcept = default;
+    Cursor::~Cursor() = default;
+
+    /*PLATFORM_EXPORT*/ CursorPositionCallbackType& Cursor::OnCursorPosition()
     {
-        other.m_PIMPL = nullptr;
-    }
-    
-    Cursor& Cursor::operator=(Cursor&& other) noexcept
-    {
-        m_PIMPL = other.m_PIMPL;
-        other.m_PIMPL = nullptr;
-        return *this;
-    }
-    
-    Cursor::~Cursor()
-    {
-    	delete reinterpret_cast<CursorImpl*>(m_PIMPL);
+        return m_PIMPL->OnCursorPosition();
     }
 
-    /*PLATFORM_EXPORT*/ Cursor::CursorPositionCallbackType& Cursor::OnCursorPosition()
+    /*PLATFORM_EXPORT*/ CursorEnterCallbackType& Cursor::OnCursorEnter()
     {
-        return reinterpret_cast<CursorImpl*>(m_PIMPL)->OnCursorPosition();
+        return m_PIMPL->OnCursorEnter();
     }
 
-    /*PLATFORM_EXPORT*/ Cursor::CursorEnterCallbackType& Cursor::OnCursorEnter()
+    /*PLATFORM_EXPORT*/ MouseButtonCallbackType& Cursor::OnMouseButton()
     {
-        return reinterpret_cast<CursorImpl*>(m_PIMPL)->OnCursorEnter();
+        return m_PIMPL->OnMouseButton();
     }
 
-    /*PLATFORM_EXPORT*/ Cursor::CursorButtonCallbackType& Cursor::OnCursorButton()
+    /*PLATFORM_EXPORT*/ ScrollCallbackType& Cursor::OnScroll()
     {
-        return reinterpret_cast<CursorImpl*>(m_PIMPL)->OnCursorButton();
+        return m_PIMPL->OnScroll();
     }
 
-    /*PLATFORM_EXPORT*/ Cursor::CursorScrollCallbackType& Cursor::OnCursorScroll()
+    CursorImpl* Cursor::GetPIMPL()
     {
-        return reinterpret_cast<CursorImpl*>(m_PIMPL)->OnCursorScroll();
-    }
-
-    void Cursor::GLFWcursorposfun(double xpos, double ypos)
-    {
-        reinterpret_cast<CursorImpl*>(m_PIMPL)->GLFWcursorposfun(xpos, ypos);
-    }
-
-    void Cursor::GLFWcursorenterfun(int entered)
-    {
-        reinterpret_cast<CursorImpl*>(m_PIMPL)->GLFWcursorenterfun(entered);
-    }
-
-    void Cursor::GLFWmousebuttonfun(int button, int action, int mods)
-    {
-        reinterpret_cast<CursorImpl*>(m_PIMPL)->GLFWmousebuttonfun(button, action, mods);
-    }
-
-    void Cursor::GLFWscrollfun(double xoffset, double yoffset)
-    {
-        reinterpret_cast<CursorImpl*>(m_PIMPL)->GLFWscrollfun(xoffset, yoffset);
+        return m_PIMPL.GetMutable();
     }
 }

@@ -73,7 +73,7 @@ namespace Platform
         : m_Window(window)
         , m_Cursor(m_Window)
         , m_Keyboard(m_Window)
-        , m_GLFWwindowUserData(m_Cursor, m_Keyboard)
+        , m_GLFWwindowUserData(m_Cursor.GetPIMPL(), m_Keyboard.GetPIMPL()) // important: construct after m_Cursor and m_Keyboard
         , m_ResizeCallback()
         , m_PreviousWidth(0)
         , m_PreviousHeight(0)

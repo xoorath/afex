@@ -29,7 +29,7 @@ namespace Platform
 
     /*PLATFORM_EXPORT explicit*/ Window::Window(const WindowArgs& args)
     {
-        m_PIMPL = reinterpret_cast<void*>(WindowImpl::Create(args));
+        m_PIMPL = WindowImpl::Create(args);
         AFEX_LOG_TRACE("Window created {} ({}, {}, {}) ",
             (IsValid() ? "successfully" : "unsuccessfully"), 
             args.GetWidth(), 
@@ -40,51 +40,51 @@ namespace Platform
     /*PLATFORM_EXPORT*/ Window::~Window()
     {
         AFEX_LOG_TRACE("Window destroyed");
-        delete reinterpret_cast<WindowImpl*>(m_PIMPL);
+        delete m_PIMPL;
     }
 
     /*PLATFORM_EXPORT*/ void Window::RequestClose()
     {
-        reinterpret_cast<WindowImpl*>(m_PIMPL)->RequestClose();
+        m_PIMPL->RequestClose();
     }
 
     /*PLATFORM_EXPORT*/ bool Window::CloseRequested() const
     {
-        return reinterpret_cast<const WindowImpl*>(m_PIMPL)->CloseRequested();
+        return m_PIMPL->CloseRequested();
     }
 
     /*PLATFORM_EXPORT*/ void Window::PollEvents()
     {
-        reinterpret_cast<WindowImpl*>(m_PIMPL)->PollEvents();
+        m_PIMPL->PollEvents();
     }
 
     /*PLATFORM_EXPORT*/ const Keyboard& Window::GetKeyboard() const
     {
-        return reinterpret_cast<const WindowImpl*>(m_PIMPL)->GetKeyboard();
+        return m_PIMPL->GetKeyboard();
     }
 
     /*PLATFORM_EXPORT*/ Keyboard& Window::GetKeyboardMutable()
     {
-        return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetKeyboardMutable();
+        return m_PIMPL->GetKeyboardMutable();
     }
 
     /*PLATFORM_EXPORT*/ const Cursor& Window::GetCursor() const
     {
-        return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetCursor();
+        return m_PIMPL->GetCursor();
     }
 
     /*PLATFORM_EXPORT*/ Cursor& Window::GetCursorMutable()
     {
-        return reinterpret_cast<WindowImpl*>(m_PIMPL)->GetCursorMutable();
+        return m_PIMPL->GetCursorMutable();
     }
 
     /*PLATFORM_EXPORT*/ Window::ResizeCallbackType& Window::OnResize()
     {
-        return reinterpret_cast<WindowImpl*>(m_PIMPL)->OnResize();
+        return m_PIMPL->OnResize();
     }
 
     /*PLATFORM_EXPORT*/ void* Window::GetNativeWindowHandle() const
     {
-        return reinterpret_cast<const WindowImpl*>(m_PIMPL)->GetNativeWindowHandle();
+        return m_PIMPL->GetNativeWindowHandle();
     }
 }

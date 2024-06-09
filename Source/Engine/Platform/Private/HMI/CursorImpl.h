@@ -1,6 +1,10 @@
 #pragma once
 
-#include <Platform/HMI/Cursor.h>
+#include <Platform/HMI/CursorCallbackTypes.h>
+
+//////////////////////////////////////////////////////////////////////////
+
+typedef struct GLFWwindow GLFWwindow;
 
 //////////////////////////////////////////////////////////////////////////
 namespace Platform
@@ -10,37 +14,29 @@ namespace Platform
     {
     public:
         explicit CursorImpl(GLFWwindow* window);
-        ~CursorImpl();
-        
-        CursorImpl(CursorImpl&&) noexcept               = delete;
-        CursorImpl& operator=(CursorImpl&&) noexcept    = delete;
-        CursorImpl()                                    = delete;
+        CursorImpl(CursorImpl&&) noexcept;
+        CursorImpl& operator=(CursorImpl&&) noexcept;
+        CursorImpl()                                    = default;
         CursorImpl(const CursorImpl&)                   = delete;
         CursorImpl& operator=(const CursorImpl&)        = delete;
+        ~CursorImpl();
 
-        Cursor::CursorPositionCallbackType& OnCursorPosition()  { return m_OnCursorPosition; }
-        Cursor::CursorEnterCallbackType&    OnCursorEnter()     { return m_OnCursorEnter; }
-        Cursor::CursorButtonCallbackType&   OnCursorButton()    { return m_OnCursorButton; }
-        Cursor::CursorScrollCallbackType&   OnCursorScroll()    { return m_OnCursorScroll; }
+        CursorPositionCallbackType& OnCursorPosition()  { return m_OnCursorPosition; }
+        CursorEnterCallbackType&    OnCursorEnter()     { return m_OnCursorEnter; }
+        MouseButtonCallbackType&    OnMouseButton()     { return m_OnMouseButton; }
+        ScrollCallbackType&         OnScroll()          { return m_OnScroll; }
 
-        // Callbacks that come from Cursor
+    private:
         void GLFWcursorposfun(double xpos, double ypos);
         void GLFWcursorenterfun(int entered);
         void GLFWmousebuttonfun(int button, int action, int mods);
         void GLFWscrollfun(double xoffset, double yoffset);
 
-    private:
-        static void GLFWcursorposfunStatic(GLFWwindow* window, double xpos, double ypos);
-        static void GLFWcursorenterfunStatic(GLFWwindow* window, int entered);
-        static void GLFWmousebuttonfunStatic(GLFWwindow* window, int button, int action, int mods);
-        static void GLFWscrollfunStatic(GLFWwindow* window, double xoffset, double yoffset);
+        GLFWwindow* m_Window = nullptr;
 
-        GLFWwindow* m_Window;
-
-        Cursor::CursorPositionCallbackType m_OnCursorPosition;
-        Cursor::CursorEnterCallbackType m_OnCursorEnter;
-        Cursor::CursorButtonCallbackType m_OnCursorButton;
-        Cursor::CursorScrollCallbackType m_OnCursorScroll;
-
+        CursorPositionCallbackType m_OnCursorPosition;
+        CursorEnterCallbackType m_OnCursorEnter;
+        MouseButtonCallbackType m_OnMouseButton;
+        ScrollCallbackType m_OnScroll;
     };
 }

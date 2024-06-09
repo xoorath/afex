@@ -73,6 +73,24 @@ namespace Core
             return m_Funcs.size() > 0;
         }
 
+        Signal()                            = default;
+        Signal(const Signal&)               = delete;
+        Signal& operator=(const Signal&)    = delete;
+        ~Signal()                           = default;
+
+        Signal(Signal&& other) noexcept
+        {
+            std::lock_guard<std::mutex> lock(other.m_Mutex);
+            m_Funcs = std::move(other.m_Funcs);
+        }
+
+        Signal& operator=(Signal&& other) noexcept
+        {
+            std::lock_guard<std::mutex> lock(other.m_Mutex);
+            m_Funcs = std::move(other.m_Funcs);
+            return *this;
+        }
+
     private:
         mutable std::mutex m_Mutex;
         FuncList m_Funcs;
