@@ -144,6 +144,14 @@ namespace Platform
         return m_ResizeCallback;
     }
 
+    void WindowImpl::GetSize(uint32_t& outWidth, uint32_t& outHeight) const
+    {
+        int width, height;
+        glfwGetWindowSize(m_Window, &width, &height);
+        outWidth = static_cast<uint32_t>(width);
+        outHeight = static_cast<uint32_t>(height);
+    }
+
     void* WindowImpl::GetNativeWindowHandle() const
     {
         return glfwGetWin32Window(m_Window);

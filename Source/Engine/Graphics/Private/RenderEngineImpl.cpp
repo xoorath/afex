@@ -31,6 +31,8 @@ namespace Graphics
         : m_QueueAllocator()
         , m_RenderThreadEvents(&m_QueueAllocator)
         , m_DebugMode(DebugMode::Default)
+        , m_LastRequestedWidth(args.GetWidth())
+        , m_LastRequestedHeight(args.GetHeight())
         , m_RenderThread()
         , m_Args(args)
         , m_Valid(false)
@@ -150,7 +152,7 @@ namespace Graphics
         const uint32_t k_DbgTextWidth = 8;
         const uint32_t k_DbgTextHeight = 16;
 
-        uint32_t renderFrameNumber = 0;
+        bool shouldDisplayLogo = false;
 
         bool exit = false;
         while (!exit)
@@ -185,6 +187,13 @@ namespace Graphics
                     delete debugModeEvent;
                     break;
                 }
+                case EventType::DebugLogo:
+                {
+                    DebugLogoEvent* debugLogoEvent = reinterpret_cast<DebugLogoEvent*>(ev);
+                    shouldDisplayLogo = debugLogoEvent->ShouldDisplayLogo();
+                    delete debugLogoEvent;
+                    break;
+                }
                 default:
                 {
                     delete ev;
@@ -195,39 +204,10 @@ namespace Graphics
 
             bgfx::touch(Graphics::ViewId::k_Clear);
             bgfx::dbgTextClear();
-            bgfx::dbgTextImage(
-                /*x=*/      static_cast<uint16_t>(bx::max((int32_t)(width / 2 / k_DbgTextWidth) - (int32_t)(Logo::k_ImageWidth / 2), 0)),
-                /*y=*/      static_cast<uint16_t>(bx::max((int32_t)(height / 2 / k_DbgTextHeight) - (int32_t)(Logo::k_ImageHeight / 2), 0)),
-                /*width=*/  static_cast<uint16_t>(Logo::k_ImageWidth),
-                /*height=*/ static_cast<uint16_t>(Logo::k_ImageHeight),
-                /*data=*/   Logo::k_ImageData,
-                /*pitch=*/  static_cast<uint16_t>(Logo::k_BufferBytesPerPixel * Logo::k_BufferWidth)
-            );
 
             const bgfx::Stats* stats = bgfx::getStats();
 
             RecordSample(stats);
-
-            char fpsOverlay[256];
-            uint16_t fpsOverlayLength = static_cast<uint16_t>(bx::snprintf(fpsOverlay, BX_COUNTOF(fpsOverlay), "l:%.3fms, h:%.3fms a: %.3fms, %.1f FPS"
-                , m_Samples.m_min
-                , m_Samples.m_max
-                , m_Samples.m_avg
-                , 1000.0f / m_Samples.m_avg
-            ));
-
-            char resolutionOverlay[256];
-            uint16_t resolutionOverlayLength = static_cast<uint16_t>(
-                bx::snprintf(resolutionOverlay, BX_COUNTOF(resolutionOverlay), "%dW x %dW",
-                stats->width, stats->height
-            ));
-
-            // try to keep the text in the same position, but make sure we show all of it.
-            fpsOverlayLength = std::max<uint16_t>(fpsOverlayLength + 1, 43);
-            resolutionOverlayLength = std::max<uint16_t>(resolutionOverlayLength + 1, 12);
-
-            bgfx::dbgTextPrintf(stats->textWidth - fpsOverlayLength, 1, 0x0f, fpsOverlay);
-            bgfx::dbgTextPrintf(stats->textWidth - resolutionOverlayLength, 2, 0x0f, resolutionOverlay);
 
             switch (m_DebugMode)
             {
@@ -242,6 +222,18 @@ namespace Graphics
                 bgfx::setDebug(BGFX_DEBUG_STATS);
                 break;
             case DebugMode::Text:
+                if (shouldDisplayLogo)
+                {
+                    bgfx::dbgTextImage(
+                        /*x=*/      static_cast<uint16_t>(bx::max((int32_t)(width / 2 / k_DbgTextWidth) - (int32_t)(Logo::k_ImageWidth / 2), 0)),
+                        /*y=*/      static_cast<uint16_t>(bx::max((int32_t)(height / 2 / k_DbgTextHeight) - (int32_t)(Logo::k_ImageHeight / 2), 0)),
+                        /*width=*/  static_cast<uint16_t>(Logo::k_ImageWidth),
+                        /*height=*/ static_cast<uint16_t>(Logo::k_ImageHeight),
+                        /*data=*/   Logo::k_ImageData,
+                        /*pitch=*/  static_cast<uint16_t>(Logo::k_BufferBytesPerPixel * Logo::k_BufferWidth)
+                    );
+                }
+                DrawDebugText(stats);
                 bgfx::setDebug(BGFX_DEBUG_TEXT);
                 break;
             case DebugMode::Wireframe:
@@ -253,7 +245,7 @@ namespace Graphics
             m_SubmitFrameSemaphore.wait();
             // render everything that was submitted
             m_OnRender.Invoke();
-            renderFrameNumber = bgfx::frame();
+            bgfx::frame();
 
             // This moment here can be thought of as between frames.
             // This is where it is safe to update data shared between the main and render thread
@@ -277,12 +269,25 @@ namespace Graphics
 
     void RenderEngineImpl::Resize(uint32_t width, uint32_t height)
     {
+        m_LastRequestedWidth = width;
+        m_LastRequestedHeight = height;
         m_RenderThreadEvents.push(new ResizeEvent(width, height));
+    }
+
+    void RenderEngineImpl::GetSize(uint32_t& outWidth, uint32_t& outHeight) const
+    {
+        outWidth = m_LastRequestedWidth;
+        outHeight = m_LastRequestedHeight;
     }
 
     void RenderEngineImpl::SetDebugMode(DebugMode mode)
     {
         m_RenderThreadEvents.push(new DebugModeEvent(mode));
+    }
+
+    void RenderEngineImpl::SetDisplayLogo(bool shouldDisplayLogo)
+    {
+        m_RenderThreadEvents.push(new DebugLogoEvent(shouldDisplayLogo));
     }
 
     RenderEngine::RenderCallback& RenderEngineImpl::OnRender()
@@ -296,15 +301,6 @@ namespace Graphics
     }
 
     ////////////////////////////////////////////////////////////////////////// Private
-    void RenderEngineImpl::ResetSamples()
-    {
-        m_Samples.m_offset = 0;
-        bx::memSet(m_Samples.m_values, 0, sizeof(m_Samples.m_values));
-        m_Samples.m_min = 0.0f;
-        m_Samples.m_max = 0.0f;
-        m_Samples.m_avg = 0.0f;
-    }
-
     void RenderEngineImpl::RecordSample(const bgfx::Stats* stats)
     {
         const double toMsCpu = 1000.0 / stats->cpuTimerFreq;
@@ -329,5 +325,56 @@ namespace Graphics
         m_Samples.m_min = min;
         m_Samples.m_max = max;
         m_Samples.m_avg = avg / m_Samples.k_NumSamples;
+    }
+
+    void RenderEngineImpl::DrawDebugText(const bgfx::Stats* stats) const
+    {
+        char fpsOverlay[128];
+
+        const float fps = 1000.0f / m_Samples.m_avg;
+
+        const auto fpsColor = [](float fps)
+        {
+            if(fps > 115.0f)
+            {
+                return "\x1b[10;0m";
+            }
+            else if (fps > 55.0f)
+            {
+                return "\x1b[14;0m";
+            }
+            else 
+            {
+                return "\x1b[12;0m";
+            }
+        }(fps);
+
+        // we use fpsOverlayLength for positioning but it will include the color characters which aren't rendered
+        // this offset removes those color characters from the overall length.
+        const int16_t colorOffset = 11;
+
+        const int16_t fpsOverlayLength = static_cast<int16_t>
+            (
+                bx::snprintf(fpsOverlay, BX_COUNTOF(fpsOverlay), "%i x %i | %s%.1f FPS\x1b[0m",
+                    static_cast<int32_t>(stats->width), static_cast<int32_t>(stats->height),
+                    fpsColor,
+                    fps
+                )
+            ) - colorOffset;
+
+        bgfx::dbgTextPrintf
+            (
+           /*x=*/           static_cast<uint16_t>
+                            (
+                                bx::max<int16_t>
+                                (
+                                    0,
+                                    static_cast<int16_t>(stats->textWidth) - fpsOverlayLength
+                                )
+                            ), 
+            /*y=*/          0,
+            /*attr=*/       0x0f,
+            /*format...=*/  fpsOverlay
+            );
     }
 }

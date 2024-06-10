@@ -30,6 +30,8 @@ namespace Platform
         ImGuiInputProviderImpl& operator=(const ImGuiInputProviderImpl&)        = default;
         ImGuiInputProviderImpl& operator=(ImGuiInputProviderImpl&&) noexcept    = default;
         
+        void SetResolutionScale(float scale);
+
     private:
         Cursor& m_Cursor;
         Keyboard& m_Keyboard;
@@ -40,5 +42,7 @@ namespace Platform
         CursorEnterCallbackType::Token m_CursorEnterSubscription;
         MouseButtonCallbackType::Token m_CursorButtonSubscription;
         ScrollCallbackType::Token m_CursorScrollSubscription;
+
+        float m_ResolutionScale = 1.0f;
     };
 }

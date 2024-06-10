@@ -18,7 +18,10 @@ namespace Graphics
     {
         Exit,
         Resize,
-        DebugMode
+        // Debug events:
+        DebugMode,
+        DebugLogo,
+
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -69,5 +72,25 @@ namespace Graphics
     private:
         EventType m_Type = EventType::DebugMode;
         DebugMode m_DebugMode = DebugMode::Default;
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+    struct DebugLogoEvent
+    {
+    public:
+        explicit DebugLogoEvent(bool displayLogo)
+            : m_Type(EventType::DebugLogo)
+            , m_DisplayLogo(displayLogo) { }
+        DebugLogoEvent() = default;
+        DebugLogoEvent(const DebugLogoEvent&) = default;
+        DebugLogoEvent(DebugLogoEvent&&) noexcept = default;
+        DebugLogoEvent& operator=(const DebugLogoEvent&) = default;
+        DebugLogoEvent& operator=(DebugLogoEvent&&) noexcept = default;
+        ~DebugLogoEvent() = default;
+
+        bool ShouldDisplayLogo() const { return m_DisplayLogo; }
+    private:
+        EventType m_Type = EventType::DebugLogo;
+        bool m_DisplayLogo = false;
     };
 }

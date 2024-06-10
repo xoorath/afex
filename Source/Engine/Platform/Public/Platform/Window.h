@@ -51,8 +51,9 @@ namespace Platform
         PLATFORM_EXPORT const Cursor& GetCursor() const;
         PLATFORM_EXPORT Cursor& GetCursorMutable();
 
-        // Callbacks:
+        // Size:
         PLATFORM_EXPORT ResizeCallbackType& OnResize();
+        PLATFORM_EXPORT void GetSize(uint32_t& outWidth, uint32_t& outHeight) const;
 
         // Misc.
         PLATFORM_EXPORT void* GetNativeWindowHandle() const;

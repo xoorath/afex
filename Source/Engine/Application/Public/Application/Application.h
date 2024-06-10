@@ -6,6 +6,7 @@
 
 // System
 #include <functional>
+#include <string_view>
 
 namespace Graphics
 {
@@ -65,7 +66,7 @@ namespace Application
         // {
         //     return false; // GameSystem failed to init.
         // }
-        APPLICATION_EXPORT void AddShutdownProcedure(std::function<void()> procedure);
+        APPLICATION_EXPORT void AddShutdownProcedure(std::string_view debugName, std::function<void()> procedure);
         
         //////////////////////////////////////////////////////////////////////////
         // Engine systems:
@@ -76,8 +77,14 @@ namespace Application
 
         APPLICATION_EXPORT const Platform::Window& GetWindow() const;
         APPLICATION_EXPORT Platform::Window& GetWindowMutable();
+
+        //////////////////////////////////////////////////////////////////////////
+        // Settings:
+        APPLICATION_EXPORT float GetRenderScale() const;
+        APPLICATION_EXPORT void SetRenderScale(float scale);
+
     
     private:
-        Core::PIMPL<ApplicationImpl, 3120> m_PIMPL;
+        Core::PIMPL<ApplicationImpl, 3152> m_PIMPL;
     };
 }

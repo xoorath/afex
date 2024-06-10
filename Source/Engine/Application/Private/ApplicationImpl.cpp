@@ -23,26 +23,29 @@ namespace Application
         AFEX_LOG_TRACE(__FUNCTION__ "()");
         for (auto it = m_ShutdownProcedure.rbegin(); it != m_ShutdownProcedure.rend(); ++it)
         {
-            (*it)();
+            AFEX_LOG_TRACE("Shutdown procedure: {}", (std::get<std::string>(*it)));
+            (std::get<std::function<void()>>(*it))();
         }
     }
     
     bool ApplicationImpl::Init()
     {
         AFEX_LOG_TRACE(__FUNCTION__ "()");
+        ////////////////////////////////////////////////////////////////////////// Global Init
         if (Platform::Window::GlobalInit())
         {
-            AddShutdownProcedure(&Platform::Window::GlobalShutdown);
+            AddShutdownProcedure("Window Global", &Platform::Window::GlobalShutdown);
         }
         else
         {
             return false;
         }
 
+        ////////////////////////////////////////////////////////////////////////// ImGui Context
         m_ImguiContext = ImGui::CreateContext();
         if(m_ImguiContext)
         {
-            AddShutdownProcedure([this]()
+            AddShutdownProcedure("ImGui Context", [this]()
             {
                 ImGui::DestroyContext(m_ImguiContext); 
             });
@@ -52,6 +55,7 @@ namespace Application
             return false;
         }
 
+        ////////////////////////////////////////////////////////////////////////// Window
         const uint32_t width = m_Config.GetWidth();
         const uint32_t height = m_Config.GetHeight();
         const std::string_view title = m_Config.GetTitle();
@@ -60,42 +64,68 @@ namespace Application
         m_Window.emplace(windowArgs);
         if (m_Window->IsValid())
         {
-            AddShutdownProcedure([this]() { m_Window.reset(); });
+            AddShutdownProcedure("Window",
+                [&m_Window = m_Window]()
+                {
+                    m_Window.reset();
+                });
         }
         else
         {
             return false;
         }
 
+        ////////////////////////////////////////////////////////////////////////// Render Engine
         const Graphics::RenderEngineArgs renderArgs(m_Window->GetNativeWindowHandle(), m_ImguiContext, width, height);
         m_RenderEngine.emplace(renderArgs);
         if (m_RenderEngine->IsValid())
         {
-            AddShutdownProcedure([this]() { m_RenderEngine.reset(); });
+            AddShutdownProcedure("Render Engine",
+                [&m_RenderEngine=m_RenderEngine]()
+                {
+                    m_RenderEngine.reset();
+                });
         }
         else
         {
             return false;
         }
 
+        ////////////////////////////////////////////////////////////////////////// ImGui Renderer
         m_ImguiRenderer.emplace(m_ImguiContext, width, height);
         auto renderSubscription = m_RenderEngine->OnRender().Add(
-            [this]()
+            [&m_ImguiRenderer = m_ImguiRenderer]()
             {
                 m_ImguiRenderer->Render();
             });
-        AddShutdownProcedure(
+        AddShutdownProcedure("ImGui Renderer",
             [this, renderSubscription]()
             {
                 m_RenderEngine->OnRender().Remove(renderSubscription);
                 m_ImguiRenderer.reset();
             });
 
-        m_Window->OnResize().Add(
+        //////////////////////////////////////////////////////////////////////////
+        m_ImguiInputProvider.emplace(m_ImguiContext, m_Window->GetCursorMutable(), m_Window->GetKeyboardMutable());
+        AddShutdownProcedure("ImGui Input Provider",
+            [this]()
+            {
+                m_ImguiInputProvider.reset();
+            });
+
+        ////////////////////////////////////////////////////////////////////////// Resize Callbacks
+        auto resizeSubscription = m_Window->OnResize().Add(
             [this](uint32_t width, uint32_t height)
             {
+                width = static_cast<uint32_t>(static_cast<float>(width) / m_RenderScale);
+                height = static_cast<uint32_t>(static_cast<float>(height) / m_RenderScale);
                 m_RenderEngine->Resize(width, height);
                 m_ImguiRenderer->Resize(width, height);
+            });
+        AddShutdownProcedure("Resize Subscription",
+            [this, resizeSubscription]()
+            {
+                m_Window->OnResize().Remove(resizeSubscription);
             });
 
         return true;
@@ -131,8 +161,27 @@ namespace Application
         m_RenderEngine->WaitForRender();
     }
 
-    void ApplicationImpl::AddShutdownProcedure(std::function<void()> procedure)
+    void ApplicationImpl::AddShutdownProcedure(std::string_view debugName, std::function<void()> procedure)
     {
-        m_ShutdownProcedure.push_back(procedure);
+        m_ShutdownProcedure.push_back(std::make_tuple(std::string(debugName), procedure));
+    }
+
+    float ApplicationImpl::GetRenderScale() const
+    {
+        return m_RenderScale;
+    }
+
+    void ApplicationImpl::SetRenderScale(float scale)
+    {
+        m_RenderScale = scale;
+
+        uint32_t width, height;
+        m_Window->GetSize(width, height);
+        width = static_cast<uint32_t>(static_cast<float>(width) / m_RenderScale);
+        height = static_cast<uint32_t>(static_cast<float>(height) / m_RenderScale);
+
+        m_RenderEngine->Resize(width, height);
+        m_ImguiRenderer->Resize(width, height);
+        m_ImguiInputProvider->SetResolutionScale(m_RenderScale);
     }
 }

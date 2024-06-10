@@ -35,9 +35,19 @@ namespace Graphics
         m_PIMPL->Resize(width, height);
     }
 
+    /*GRAPHICS_EXPORT*/ void RenderEngine::GetSize(uint32_t& outWidth, uint32_t& outHeight) const
+    {
+        m_PIMPL->GetSize(outWidth, outHeight);
+    }
+
     /*GRAPHICS_EXPORT*/ void RenderEngine::SetDebugMode(DebugMode mode)
     {
         m_PIMPL->SetDebugMode(mode);
+    }
+
+    /*GRAPHICS_EXPORT*/ void RenderEngine::SetDisplayLogo(bool shouldDisplayLogo)
+    {
+        m_PIMPL->SetDisplayLogo(shouldDisplayLogo);
     }
 
     /*GRAPHICS_EXPORT*/ RenderEngine::RenderCallback& RenderEngine::OnRender()

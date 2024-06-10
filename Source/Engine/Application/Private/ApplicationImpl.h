@@ -10,6 +10,8 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <string_view>
+#include <tuple>
 #include <vector>
 
 //////////////////////////////////////////////////////////////////////////
@@ -39,14 +41,16 @@ namespace Application
         void SubmitFrame();
         void WaitForRenderer();
 
-
-        void AddShutdownProcedure(std::function<void()> procedure);
+        void AddShutdownProcedure(std::string_view debugName, std::function<void()> procedure);
 
         const Graphics::RenderEngine& GetRenderEngine() const { return m_RenderEngine.value(); }
         Graphics::RenderEngine& GetRenderEngineMutable() { return m_RenderEngine.value(); }
 
         const Platform::Window& GetWindow() const { return m_Window.value(); }
         Platform::Window& GetWindowMutable() { return m_Window.value(); }
+
+        float GetRenderScale() const;
+        void SetRenderScale(float scale);
         
     private:
         // Future configurable values:
@@ -64,6 +68,8 @@ namespace Application
         std::optional<Platform::ImGuiInputProvider> m_ImguiInputProvider;
 
         // during destruction this vector will be iterated in reverse and invoked.
-        std::vector<std::function<void()>> m_ShutdownProcedure;
+        std::vector<std::tuple<std::string, std::function<void()>>> m_ShutdownProcedure;
+
+        float m_RenderScale = 1.0f;
     };
 }

@@ -188,8 +188,11 @@ namespace Platform
             });
 
         m_CursorPositionSubscription = cursor.OnCursorPosition().Add(
-            [](float xPos, float yPos)
+            [this](float xPos, float yPos)
             {
+                xPos /= m_ResolutionScale;
+                yPos /= m_ResolutionScale;
+
                 ImGuiIO& io = ImGui::GetIO();
                 io.AddMousePosEvent(xPos, yPos);
             });
@@ -216,5 +219,10 @@ namespace Platform
         m_Keyboard.OnKeyEvent().Remove(m_KeyCallbackSubscription);
         m_Cursor.OnCursorPosition().Remove(m_CursorPositionSubscription);
         m_Cursor.OnMouseButton().Remove(m_CursorButtonSubscription);
+    }
+
+    void ImGuiInputProviderImpl::SetResolutionScale(float scale)
+    {
+        m_ResolutionScale = scale;
     }
 }

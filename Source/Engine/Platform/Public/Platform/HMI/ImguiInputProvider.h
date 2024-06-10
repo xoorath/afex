@@ -27,8 +27,13 @@ namespace Platform
         ImGuiInputProvider()                                        = delete;
         ImGuiInputProvider(const ImGuiInputProvider&)               = delete;
         ImGuiInputProvider& operator=(const ImGuiInputProvider&)    = delete;
-        
+
+        // Resolution scale impacts cursor position
+        // Note: that the scale is inverse of the resolution.
+        // ie: a 2x scale means you have 1/2 the pixels.
+        PLATFORM_EXPORT void SetResolutionScale(float scale);
+
     private:
-        Core::PIMPL<ImGuiInputProviderImpl, 136> m_PIMPL;
+        Core::PIMPL<ImGuiInputProviderImpl, 144> m_PIMPL;
     };
 }

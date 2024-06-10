@@ -46,6 +46,7 @@ namespace Platform
         Cursor& GetCursorMutable();
 
         Window::ResizeCallbackType& OnResize();
+        void GetSize(uint32_t& outWidth, uint32_t& outHeight) const;
 
         void* GetNativeWindowHandle() const;
     private:

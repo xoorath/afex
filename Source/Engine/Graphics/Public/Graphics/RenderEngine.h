@@ -47,17 +47,22 @@ namespace Graphics
 
         // Resizes the render target (does not take effect immediately)
         GRAPHICS_EXPORT void Resize(uint32_t width, uint32_t height);
+        // Gets the last requested render target size (may not be currently in effect)
+        GRAPHICS_EXPORT void GetSize(uint32_t& outWidth, uint32_t& outHeight) const;
 
         // Sets the bgfx debug mode
         GRAPHICS_EXPORT void SetDebugMode(DebugMode mode);
+        // Renders the AFEX logo when the debug mode is set to DebugMode::Text
+        GRAPHICS_EXPORT void SetDisplayLogo(bool shouldDisplayLogo);
 
         // Callbacks
         GRAPHICS_EXPORT RenderCallback& OnRender();
 
-
+        // SAFE to use during Application::Render/GUI 
+        // UNSAFE to use during Application::Update
         GRAPHICS_EXPORT const bgfx::Stats* GetStats() const;
 
     private:
-        Core::PIMPL<RenderEngineImpl, 1920> m_PIMPL;
+        Core::PIMPL<RenderEngineImpl, 1936> m_PIMPL;
     };
 }

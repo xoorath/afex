@@ -44,14 +44,15 @@ namespace Graphics
         void SubmitFrame();
         void WaitForRender();
         void Resize(uint32_t width, uint32_t height);
+        void GetSize(uint32_t& outWidth, uint32_t& outHeight) const;
         void SetDebugMode(DebugMode mode);
+        void SetDisplayLogo(bool shouldDisplayLogo);
         RenderEngine::RenderCallback& OnRender();
         const bgfx::Stats* GetStats() const;
 
     private:
-        // Stats
-        void ResetSamples();
         void RecordSample(const bgfx::Stats* value);
+        void DrawDebugText(const bgfx::Stats*) const;
 
         // Event queue
         bx::DefaultAllocator m_QueueAllocator;
@@ -59,6 +60,8 @@ namespace Graphics
 
         // Event data cache
         DebugMode m_DebugMode;
+        uint32_t m_LastRequestedWidth;
+        uint32_t m_LastRequestedHeight;
 
         // Lifetime management
         bx::Thread m_RenderThread;

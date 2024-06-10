@@ -88,6 +88,11 @@ namespace Platform
         return m_PIMPL->OnResize();
     }
 
+    /*PLATFORM_EXPORT*/ void Window::GetSize(uint32_t& outWidth, uint32_t& outHeight) const
+    {
+        return m_PIMPL->GetSize(outWidth, outHeight);
+    }
+
     /*PLATFORM_EXPORT*/ void* Window::GetNativeWindowHandle() const
     {
         return m_PIMPL->GetNativeWindowHandle();

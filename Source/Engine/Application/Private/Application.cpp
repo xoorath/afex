@@ -53,11 +53,21 @@ namespace Application
         return 0;
     }
 
+    /*APPLICATION_EXPORT*/ float Application::GetRenderScale() const
+    {
+        return m_PIMPL->GetRenderScale();
+    }
+
+    /*APPLICATION_EXPORT*/ void Application::SetRenderScale(float scale)
+    {
+        m_PIMPL->SetRenderScale(scale);
+    }
+
     ////////////////////////////////////////////////////////////////////////// Protected
 
-    /*APPLICATION_EXPORT*/ void Application::AddShutdownProcedure(std::function<void()> procedure)
+    /*APPLICATION_EXPORT*/ void Application::AddShutdownProcedure(std::string_view debugName, std::function<void()> procedure)
     {
-        return m_PIMPL->AddShutdownProcedure(procedure);
+        return m_PIMPL->AddShutdownProcedure(debugName, procedure);
     }
 
     /*APPLICATION_EXPORT*/ const Graphics::RenderEngine& Application::GetRenderEngine() const
