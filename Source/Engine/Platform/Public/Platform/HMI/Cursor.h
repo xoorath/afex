@@ -2,7 +2,6 @@
 
 // Engine
 #include <Core/PIMPL.h>
-#include <Core/Signal.h>
 #include <Platform/HMI/CursorCallbackTypes.h>
 #include <Platform/Platform.export.h>
 
@@ -29,20 +28,16 @@ namespace Platform
     /*internal:*/
         CursorImpl* GetPIMPL(); // Exposed to be provided via glfw user data
     private:
-        // Only the WindowImpl is allowed to create a Keyboard
+        // Only the WindowImpl is allowed to create & initialize a Cursor
         friend class WindowImpl;
+        Cursor();                               /*=default*/
+        Cursor(const Cursor&)                   = delete;
+        Cursor& operator=(const Cursor&)        = delete;
+        Cursor(Cursor&&) noexcept;              /*=default*/
+        Cursor& operator=(Cursor&&) noexcept;   /*=default*/
+        ~Cursor();                              /*=default*/
 
-        // Sets up cursor bindings for the window.
-        // A null-pattern implementation can be created by passing a null window
-        explicit Cursor(GLFWwindow* window);
-
-        Cursor(Cursor&&) noexcept;
-        Cursor& operator=(Cursor&&) noexcept;
-        ~Cursor();
-        
-        Cursor() = delete;
-        Cursor(const Cursor&) = delete;
-        Cursor& operator=(const Cursor&) = delete;
+        void Init(GLFWwindow* window);
 
         Core::PIMPL<CursorImpl, 424> m_PIMPL;
     };

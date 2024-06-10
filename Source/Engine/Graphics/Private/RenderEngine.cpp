@@ -6,39 +6,18 @@
 //////////////////////////////////////////////////////////////////////////
 namespace Graphics
 {
-    /*GRAPHICS_EXPORT*/ RenderEngine::RenderEngine(const RenderEngineArgs& args)
+    ////////////////////////////////////////////////////////////////////////// Public
+
+    /*GRAPHICS_EXPORT explicit*/ RenderEngine::RenderEngine(const RenderEngineArgs& args)
+        : m_PIMPL(args)
     {
-        auto* impl = new RenderEngineImpl(args);
-        if (!impl->IsValid())
-        {
-            delete impl;
-            impl = nullptr;
-        }
-        m_PIMPL = impl;
     }
 
-    /*GRAPHICS_EXPORT*/ RenderEngine::~RenderEngine()
-    {
-        delete m_PIMPL;
-    }
-
-    /*GRAPHICS_EXPORT*/ RenderEngine::RenderEngine(RenderEngine&& other) noexcept
-        : m_PIMPL(other.m_PIMPL)
-    {
-        other.m_PIMPL = nullptr;
-    }
-
-    /*GRAPHICS_EXPORT*/ RenderEngine& RenderEngine::operator=(RenderEngine&& other) noexcept
-    {
-        m_PIMPL = other.m_PIMPL;
-        other.m_PIMPL = nullptr;
-        return *this;
-    }
+    /*GRAPHICS_EXPORT*/ RenderEngine::~RenderEngine() = default;
 
     /*GRAPHICS_EXPORT*/ bool RenderEngine::IsValid() const
     {
-        // Note: If initialization of the RenderEngineImpl fails, it will be null after construction
-        return m_PIMPL != nullptr;
+        return m_PIMPL->IsValid();
     }
 
     /*GRAPHICS_EXPORT*/ void RenderEngine::SubmitFrame()

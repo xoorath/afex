@@ -12,14 +12,6 @@
 
 namespace Platform
 {
-    ////////////////////////////////////////////////////////////////////////// Private
-    Keyboard::Keyboard(GLFWwindow* window)
-    {
-        m_PIMPL.emplace(window);
-    }
-
-    Keyboard::~Keyboard() = default;
-
     ////////////////////////////////////////////////////////////////////////// Public
     /*PLATFORM_EXPORT*/ KeyCallbackType& Keyboard::OnKeyEvent()
     {
@@ -35,5 +27,16 @@ namespace Platform
     KeyboardImpl* Keyboard::GetPIMPL() noexcept
     {
         return m_PIMPL.GetMutable();
+    }
+
+    ////////////////////////////////////////////////////////////////////////// Private
+    Keyboard::Keyboard()                                = default;
+    Keyboard::Keyboard(Keyboard&&) noexcept             = default;
+    Keyboard& Keyboard::operator=(Keyboard&&) noexcept  = default;
+    Keyboard::~Keyboard()                               = default;
+
+    void Keyboard::Init(GLFWwindow* window)
+    {
+        m_PIMPL.emplace(window);
     }
 }

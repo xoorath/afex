@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+    <!-- Type Visualizer for PIMPL -->
+    <Type Name="Core::PIMPL&lt;*&gt;">
+        <!-- Display the state of the PIMPL (whether the internal object is constructed) -->
+        <DisplayString>
+            Constructed = {m_Constructed}
+        </DisplayString>
+
+        <!-- Expand the view to show detailed members -->
+        <Expand>
+            <!-- Show the constructed flag -->
+            <Item Name="Constructed">m_Constructed</Item>
+
+            <Item Name="Impl" Condition="m_Constructed">reinterpret_cast&lt;const Type*&gt;(reinterpret_cast&lt;const void*&gt;((reinterpret_cast&lt;uintptr_t&gt;(m_Buffer) + __alignof (Type) - 1) &amp; ~(__alignof (Type) - 1)))</Item>
+            <Item Name="Offset">reinterpret_cast&lt;uintptr_t&gt;(m_Buffer) - ((reinterpret_cast&lt;uintptr_t&gt;(m_Buffer) + __alignof (Type) - 1) &amp; ~(__alignof (Type) - 1))</Item>
+            
+            <!-- Show a message if not constructed -->
+            <Item Name="Impl" Condition="!m_Constructed">"Not constructed"</Item>
+        </Expand>
+    </Type>
+
+</AutoVisualizer>

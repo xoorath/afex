@@ -19,7 +19,13 @@ namespace Graphics
     {
     public:
         ImGuiRendererImpl(ImGuiContext* context, uint32_t width, uint32_t height);
+        ImGuiRendererImpl(ImGuiRendererImpl&&) noexcept;
+        ImGuiRendererImpl& operator=(ImGuiRendererImpl&&) noexcept;
         ~ImGuiRendererImpl();
+
+        ImGuiRendererImpl()                                     = delete;
+        ImGuiRendererImpl(const ImGuiRendererImpl&)             = delete;
+        ImGuiRendererImpl& operator=(const ImGuiRendererImpl&)  = delete;
 
         void BeginFrame();
         void EndFrame();

@@ -9,17 +9,7 @@
 //////////////////////////////////////////////////////////////////////////
 namespace Platform
 {
-
     ////////////////////////////////////////////////////////////////////////// Public
-    /*explicit*/ Cursor::Cursor(GLFWwindow* window)
-        : m_PIMPL(window)
-    {
-    }
-    
-    Cursor::Cursor(Cursor&& other) noexcept = default;
-    Cursor& Cursor::operator=(Cursor&& other) noexcept = default;
-    Cursor::~Cursor() = default;
-
     /*PLATFORM_EXPORT*/ CursorPositionCallbackType& Cursor::OnCursorPosition()
     {
         return m_PIMPL->OnCursorPosition();
@@ -40,8 +30,20 @@ namespace Platform
         return m_PIMPL->OnScroll();
     }
 
+    ////////////////////////////////////////////////////////////////////////// Internal
     CursorImpl* Cursor::GetPIMPL()
     {
         return m_PIMPL.GetMutable();
+    }
+
+    ////////////////////////////////////////////////////////////////////////// Private
+    /*explicit*/ Cursor::Cursor()                       = default;
+    Cursor::Cursor(Cursor&& other) noexcept             = default;
+    Cursor& Cursor::operator=(Cursor&& other) noexcept  = default;
+    Cursor::~Cursor()                                   = default;
+
+    void Cursor::Init(GLFWwindow* window)
+    {
+        m_PIMPL.emplace(window);
     }
 }

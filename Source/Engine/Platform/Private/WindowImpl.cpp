@@ -18,26 +18,6 @@ namespace Platform
 {
 
     ////////////////////////////////////////////////////////////////////////// public static
-    /*static*/ WindowImpl* WindowImpl::Create(const WindowArgs& args)
-    {
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-        GLFWwindow* const glfwWindow = glfwCreateWindow(
-            /*width=*/      args.GetWidth(),
-            /*height=*/     args.GetHeight(),
-            /*title=*/      args.GetTitle().c_str(),
-            /*monitor=*/    nullptr,
-            /*share=*/      nullptr);
-
-        AFEX_ASSERT_MSG(glfwWindow != nullptr, "glfwCreateWindow failed");
-        if (glfwWindow == nullptr)
-        {
-            return nullptr;
-        }
-
-        return new WindowImpl(glfwWindow);
-    }
-
     /*static*/ void WindowImpl::ErrorCallback(int error_code, const char* description)
     {
         AFEX_UNUSED(error_code);
@@ -69,23 +49,35 @@ namespace Platform
 
     ////////////////////////////////////////////////////////////////////////// public
 
-    /*explicit*/ WindowImpl::WindowImpl(GLFWwindow* window)
-        : m_Window(window)
-        , m_Cursor(m_Window)
-        , m_Keyboard(m_Window)
-        , m_GLFWwindowUserData(m_Cursor.GetPIMPL(), m_Keyboard.GetPIMPL()) // important: construct after m_Cursor and m_Keyboard
-        , m_ResizeCallback()
-        , m_PreviousWidth(0)
-        , m_PreviousHeight(0)
+    /*explicit*/ WindowImpl::WindowImpl(const WindowArgs& args)
     {
-        AFEX_ASSERT(m_Window != nullptr);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-        glfwSetWindowUserPointer(window, reinterpret_cast<void*>(&m_GLFWwindowUserData));
+        GLFWwindow* const glfwWindow = glfwCreateWindow(
+            /*width=*/      args.GetWidth(),
+            /*height=*/     args.GetHeight(),
+            /*title=*/      args.GetTitle().c_str(),
+            /*monitor=*/    nullptr,
+            /*share=*/      nullptr);
 
-        int width, height;
-        glfwGetWindowSize(m_Window, &width, &height);
-        m_PreviousWidth = static_cast<uint32_t>(width);
-        m_PreviousHeight = static_cast<uint32_t>(height);
+        AFEX_ASSERT(glfwWindow != nullptr);
+        if(glfwWindow)
+        {
+            m_Window = glfwWindow;
+
+            m_Cursor.Init(m_Window);
+            m_GLFWwindowUserData.SetCursorPIMPL(m_Cursor.GetPIMPL());
+
+            m_Keyboard.Init(m_Window);
+            m_GLFWwindowUserData.SetKeyboardPIMPL(m_Keyboard.GetPIMPL());
+
+            glfwSetWindowUserPointer(m_Window, reinterpret_cast<void*>(&m_GLFWwindowUserData));
+
+            int width, height;
+            glfwGetWindowSize(m_Window, &width, &height);
+            m_PreviousWidth = static_cast<uint32_t>(width);
+            m_PreviousHeight = static_cast<uint32_t>(height);
+        }
     }
 
     WindowImpl::~WindowImpl()
@@ -93,6 +85,10 @@ namespace Platform
         glfwDestroyWindow(m_Window);
     }
 
+    bool WindowImpl::IsValid() const
+    {
+        return m_Window != nullptr;
+    }
 
     void WindowImpl::RequestClose()
     {

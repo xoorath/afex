@@ -13,27 +13,13 @@ namespace Graphics
 {
     ////////////////////////////////////////////////////////////////////////// public
     /*GRAPHICS_EXPORT*/ ImGuiRenderer::ImGuiRenderer(ImGuiContext* context, uint32_t width, uint32_t height)
-        : m_PIMPL(new ImGuiRendererImpl(context, width, height))
+        : m_PIMPL(context, width, height)
     {
     }
 
-    /*GRAPHICS_EXPORT*/ ImGuiRenderer::ImGuiRenderer(ImGuiRenderer&& other) noexcept
-        : m_PIMPL(other.m_PIMPL)
-    {
-        other.m_PIMPL = nullptr;
-    }
-
-    /*GRAPHICS_EXPORT*/ ImGuiRenderer& ImGuiRenderer::operator=(ImGuiRenderer&& other) noexcept
-    {
-        m_PIMPL = other.m_PIMPL;
-        other.m_PIMPL = nullptr;
-        return *this;
-    }
-
-    /*GRAPHICS_EXPORT*/ ImGuiRenderer::~ImGuiRenderer()
-    {
-        delete m_PIMPL;
-    }
+    /*GRAPHICS_EXPORT*/ ImGuiRenderer::ImGuiRenderer(ImGuiRenderer&& other) noexcept = default;
+    /*GRAPHICS_EXPORT*/ ImGuiRenderer& ImGuiRenderer::operator=(ImGuiRenderer&& other) noexcept = default;
+    /*GRAPHICS_EXPORT*/ ImGuiRenderer::~ImGuiRenderer() = default;
 
     /*GRAPHICS_EXPORT*/ void ImGuiRenderer::BeginFrame()
     {

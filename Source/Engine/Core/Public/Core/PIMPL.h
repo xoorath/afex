@@ -9,6 +9,7 @@
 //////////////////////////////////////////////////////////////////////////
 namespace Core
 {
+
     //////////////////////////////////////////////////////////////////////////
     // This class template provides a way to encapsulate the implementation 
     // details of a class in a private implementation (PIMPL) to reduce 
@@ -20,7 +21,8 @@ namespace Core
     //  1. Be aware k_BufferSize has to be a hard-coded sizeof(T). That may
     //      change based on platform or preprocessor macros. To avoid 
     //      headaches try to refrain from adding conditional members to your
-    //      implementation types.
+    //      implementation types. There is a small amount of wiggle room built in
+    //      but ideally these buffers should be precisely sized.
     //  2. Constructors and destructors of the owning class must be implemented
     //      in their cpp file with T included. You can still use '=default'
     //      so long as that is implemented in the cpp file.
@@ -33,6 +35,7 @@ namespace Core
     class PIMPL
     {
     public:
+        using Type = T;
         //////////////////////////////////////////////////////////////////////////
         // Valid with T forward declared:
 
@@ -48,18 +51,23 @@ namespace Core
             : m_Buffer{ 0 }
             , m_Constructed(false)
         {
-            static_assert(k_BufferSize >= sizeof(T), "Buffer size too small for type T.");
-            static_assert(static_cast<int64_t>(k_BufferSize)-static_cast<int64_t>(sizeof(T)) < 128, 
-                "Buffer size is excessively large for type T.");
+            static_assert(k_BufferSize >= sizeof(T), "Buffer is too small.");
+            if constexpr (k_BufferSize >= sizeof(T))
+            {
+                static_assert((k_BufferSize - sizeof(T)) < 128, "Buffer is excessively large.");
+            }
         }
 
         template<typename... Args, typename = std::enable_if_t<(sizeof...(Args) != 0)>>
         PIMPL(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value)
             : m_Constructed(false)
         {
-            static_assert(k_BufferSize >= sizeof(T), "Buffer size too small for type T.");
-            static_assert(static_cast<int64_t>(k_BufferSize) - static_cast<int64_t>(sizeof(T)) < 128,
-                "Buffer size is excessively large for type T.");
+            static_assert(k_BufferSize >= sizeof(T), "Buffer is too small.");
+            if constexpr (k_BufferSize >= sizeof(T))
+            {
+                static_assert((k_BufferSize - sizeof(T)) < 128, "Buffer is excessively large.");
+            }
+
             new(getAlignedBuffer()) T(std::forward<Args>(args)...);
             m_Constructed = true;
         }

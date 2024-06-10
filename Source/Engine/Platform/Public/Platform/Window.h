@@ -1,6 +1,7 @@
 #pragma once
 
 // Engine
+#include <Core/PIMPL.h>
 #include <Core/Signal.h>
 #include <Platform/Platform.export.h>
 
@@ -29,8 +30,13 @@ namespace Platform
         static PLATFORM_EXPORT void GlobalShutdown();
 
         PLATFORM_EXPORT explicit Window(const WindowArgs& args);
+        Window()                            = delete;
+        Window(const Window&)               = delete;
+        Window& operator=(const Window&)    = delete;
+        Window(Window&&)                    = delete;
+        Window& operator=(Window&&)         = delete;
         PLATFORM_EXPORT ~Window();
-        PLATFORM_EXPORT bool IsValid() const { return m_PIMPL != nullptr; }
+        PLATFORM_EXPORT bool IsValid() const;
 
         // Window lifecycle functions:
         PLATFORM_EXPORT void RequestClose();
@@ -52,6 +58,6 @@ namespace Platform
         PLATFORM_EXPORT void* GetNativeWindowHandle() const;
 
     private:
-        WindowImpl* m_PIMPL = nullptr;
+        Core::PIMPL<WindowImpl, 808> m_PIMPL;
     };
 }

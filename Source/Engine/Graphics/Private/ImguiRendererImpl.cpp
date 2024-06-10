@@ -157,6 +157,41 @@ namespace Graphics
             /*height=*/     static_cast<uint16_t>(displayHeight));
     }
 
+    ImGuiRendererImpl::ImGuiRendererImpl(ImGuiRendererImpl&& other) noexcept
+        : m_VertexLayout    (other.m_VertexLayout)
+        , m_FontTexture     (other.m_FontTexture)
+        , m_FontUniform     (other.m_FontUniform)
+        , m_Program         (other.m_Program)
+        , m_WidthHeight     (other.m_WidthHeight.load())
+        , m_PreviousWidth   (other.m_PreviousWidth)
+        , m_PreviousHeight  (other.m_PreviousHeight)
+        , m_ImguiContext    (other.m_ImguiContext)
+    {
+        other.m_FontTexture = static_cast<bgfx::TextureHandle>(bgfx::kInvalidHandle);
+        other.m_FontUniform = static_cast<bgfx::UniformHandle>(bgfx::kInvalidHandle);
+        other.m_Program = static_cast<bgfx::ProgramHandle>(bgfx::kInvalidHandle);
+        other.m_ImguiContext = nullptr;
+    }
+
+    ImGuiRendererImpl& ImGuiRendererImpl::operator=(ImGuiRendererImpl&& other) noexcept
+    {
+        m_VertexLayout = other.m_VertexLayout;
+        m_FontTexture = other.m_FontTexture;
+        m_FontUniform = other.m_FontUniform;
+        m_Program = other.m_Program;
+        m_WidthHeight.store(other.m_WidthHeight.load());
+        m_PreviousWidth = other.m_PreviousWidth;
+        m_PreviousHeight = other.m_PreviousHeight;
+        m_ImguiContext = other.m_ImguiContext;
+
+        other.m_FontTexture = static_cast<bgfx::TextureHandle>(bgfx::kInvalidHandle);
+        other.m_FontUniform = static_cast<bgfx::UniformHandle>(bgfx::kInvalidHandle);
+        other.m_Program = static_cast<bgfx::ProgramHandle>(bgfx::kInvalidHandle);
+        other.m_ImguiContext = nullptr;
+
+        return *this;
+    }
+
     ImGuiRendererImpl::~ImGuiRendererImpl()
     {
         auto safeDestroyHandle = [](auto& handle)

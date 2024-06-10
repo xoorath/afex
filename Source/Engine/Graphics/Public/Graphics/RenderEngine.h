@@ -1,6 +1,7 @@
 #pragma once
 
 // Engine
+#include <Core/PIMPL.h>
 #include <Core/Signal.h>
 #include <Graphics/Graphics.export.h>
 
@@ -21,13 +22,13 @@ namespace Graphics
         using RenderCallback = Core::Signal<void()>;
 
         GRAPHICS_EXPORT explicit RenderEngine(const RenderEngineArgs& args);
-        GRAPHICS_EXPORT ~RenderEngine();
-        GRAPHICS_EXPORT RenderEngine(RenderEngine&& other) noexcept;
-        GRAPHICS_EXPORT RenderEngine& operator=(RenderEngine&& other) noexcept;
-        RenderEngine(const RenderEngine&)               = delete;
-        RenderEngine& operator=(const RenderEngine&)    = delete;
+        GRAPHICS_EXPORT ~RenderEngine();                        /*=default*/
+        RenderEngine(RenderEngine&& other) noexcept             = delete;
+        RenderEngine& operator=(RenderEngine&& other) noexcept  = delete;
+        RenderEngine(const RenderEngine&)                       = delete;
+        RenderEngine& operator=(const RenderEngine&)            = delete;
 
-        // If the render engine is not valid after construction: it cannot be used and should be destroyed.
+        // If the render engine is not valid after construction it cannot be used and should be destroyed.
         GRAPHICS_EXPORT bool IsValid() const;
 
         // Only one thread is permitted to submit render calls.
@@ -45,6 +46,6 @@ namespace Graphics
         GRAPHICS_EXPORT RenderCallback& OnRender();
 
     private:
-        RenderEngineImpl* m_PIMPL = nullptr;
+        Core::PIMPL<RenderEngineImpl, 1040> m_PIMPL;
     };
 }

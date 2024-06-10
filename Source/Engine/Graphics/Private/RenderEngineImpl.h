@@ -20,6 +20,11 @@ namespace Graphics
     public:
         explicit RenderEngineImpl(const RenderEngineArgs& args);
         ~RenderEngineImpl();
+        RenderEngineImpl()                                          = delete;
+        RenderEngineImpl(const RenderEngineImpl& args)              = delete;
+        RenderEngineImpl& operator=(const RenderEngineImpl& args)   = delete;
+        RenderEngineImpl(RenderEngineImpl&& args)                   = delete;
+        RenderEngineImpl& operator=(RenderEngineImpl&& args)        = delete;
 
         static int32_t StaticRenderThreadFunc(bx::Thread* thread, void* userData);
         int32_t RenderThreadFunc();

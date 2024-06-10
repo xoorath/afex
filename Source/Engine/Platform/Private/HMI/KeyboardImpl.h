@@ -14,13 +14,13 @@ namespace Platform
     {
     public:
         explicit KeyboardImpl(GLFWwindow* window);
+        KeyboardImpl(KeyboardImpl&&) noexcept;
+        KeyboardImpl& operator=(KeyboardImpl&&) noexcept;
         ~KeyboardImpl();
         
         KeyboardImpl()                                      = delete;
         KeyboardImpl(const KeyboardImpl&)                   = delete;
-        KeyboardImpl(KeyboardImpl&&) noexcept               = delete;
         KeyboardImpl& operator=(const KeyboardImpl&)        = delete;
-        KeyboardImpl& operator=(KeyboardImpl&&) noexcept    = delete;
 
         KeyCallbackType& OnKeyEvent();
         CharCallbackType& OnCharEvent();

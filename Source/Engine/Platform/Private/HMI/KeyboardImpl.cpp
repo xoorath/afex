@@ -30,6 +30,23 @@ namespace Platform
         }
     }
 
+    KeyboardImpl::KeyboardImpl(KeyboardImpl&& other) noexcept
+        : m_Window(other.m_Window)
+        , m_KeyCallback(std::move(other.m_KeyCallback))
+        , m_CharCallback(std::move(other.m_CharCallback))
+    {
+        other.m_Window = nullptr;
+    }
+
+    KeyboardImpl& KeyboardImpl::operator=(KeyboardImpl&& other) noexcept
+    {
+        m_Window = other.m_Window;
+        m_KeyCallback = std::move(other.m_KeyCallback);
+        m_CharCallback = std::move(other.m_CharCallback);
+        other.m_Window = nullptr;
+        return *this;
+    }
+
     KeyboardImpl::~KeyboardImpl()
     {
         if (m_Window != nullptr)

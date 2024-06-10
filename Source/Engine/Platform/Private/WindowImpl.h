@@ -23,11 +23,15 @@ namespace Platform
     {
 
     public:
-        explicit WindowImpl(GLFWwindow* window);
-
+        explicit WindowImpl(const WindowArgs& args);
+        WindowImpl()                                = delete;
+        WindowImpl(const WindowImpl&)               = delete;
+        WindowImpl& operator=(const WindowImpl&)    = delete;
+        WindowImpl(WindowImpl&&)                    = delete;
+        WindowImpl& operator=(WindowImpl&&)         = delete;
         ~WindowImpl();
+        bool IsValid() const;
 
-        static WindowImpl* Create(const WindowArgs& args);
         static void ErrorCallback(int error_code, const char* description);
         static bool GlobalInit();
         static void GlobalShutdown();

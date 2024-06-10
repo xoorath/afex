@@ -28,8 +28,9 @@ namespace Platform
     ////////////////////////////////////////////////////////////////////////// public
 
     /*PLATFORM_EXPORT explicit*/ Window::Window(const WindowArgs& args)
+        : m_PIMPL()
     {
-        m_PIMPL = WindowImpl::Create(args);
+        m_PIMPL.emplace(args);
         AFEX_LOG_TRACE("Window created {} ({}, {}, {}) ",
             (IsValid() ? "successfully" : "unsuccessfully"), 
             args.GetWidth(), 
@@ -40,7 +41,11 @@ namespace Platform
     /*PLATFORM_EXPORT*/ Window::~Window()
     {
         AFEX_LOG_TRACE("Window destroyed");
-        delete m_PIMPL;
+    }
+
+    /*PLATFORM_EXPORT*/ bool Window::IsValid() const
+    {
+        return m_PIMPL->IsValid();
     }
 
     /*PLATFORM_EXPORT*/ void Window::RequestClose()

@@ -13,6 +13,7 @@ namespace Platform
 {
     class WindowImpl;
     class KeyboardImpl;
+
     //////////////////////////////////////////////////////////////////////////
     class Keyboard
     {
@@ -23,15 +24,16 @@ namespace Platform
     /*internal:*/
         KeyboardImpl* GetPIMPL() noexcept; // Exposed to be provided via glfw user data
     private:
-        // Only the WindowImpl is allowed to create a Keyboard
+        // Only the WindowImpl is allowed to create & initialize a Keyboard
         friend class WindowImpl;
-        explicit Keyboard(GLFWwindow* window);
+        Keyboard();                                 /*=default*/
+        Keyboard(const Keyboard&)                   = delete;
+        Keyboard& operator=(const Keyboard&)        = delete;
+        Keyboard(Keyboard&&) noexcept;              /*=default*/
+        Keyboard& operator=(Keyboard&&) noexcept;   /*=default*/
+        ~Keyboard();                                /*=default*/
 
-        Keyboard(const Keyboard&)               = delete;
-        Keyboard(Keyboard&&)                    = delete;
-        Keyboard& operator = (const Keyboard&)  = delete;
-        Keyboard& operator = (Keyboard&&)       = delete;
-        ~Keyboard(); /*=default*/
+        void Init(GLFWwindow* window);
 
         Core::PIMPL<KeyboardImpl, 216> m_PIMPL;
     };
