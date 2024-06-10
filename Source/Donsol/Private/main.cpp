@@ -1,204 +1,91 @@
-// Donsol
+// Engine
+#include <Application/Application.h>
+#include <Application/EntryPoint.h>
+#include <Core/CommonMacros.h>
+#include <Graphics/DebugMode.h>
+#include <Graphics/RenderEngine.h>
+#include <Platform/HMI/Keyboard.h>
+#include <Platform/Window.h>
+
 #include "./Logging/AppLogging.h"
 
-// Engine
-#include <Core/Assert.h>
-#include <Core/CommonMacros.h>
-#include <Core/Logging.h>
-#include <Platform/HMI/Cursor.h>
-#include <Platform/HMI/Keyboard.h>
-#include <Platform/HMI/ImguiInputProvider.h>
-#include <Platform/Window.h>
-#include <Platform/WindowArgs.h>
-#include <Graphics/DebugMode.h>
-#include <Graphics/ImguiRenderer.h>
-#include <Graphics/RenderEngineArgs.h>
-#include <Graphics/RenderEngine.h>
-
-// External
-#include <imgui.h>
-
-// System
-#include <atomic>
-#include <cinttypes>
-#include <memory.h>
-#include <string_view>
-#include <vector>
-
-
-static const char* k_AppName = "Donsol";
-class DonsolApp
+class DonsolApp : public Application::Application
 {
-public:
-    DonsolApp()
+protected:
+    bool EarlyInit() override
     {
-        // Configure SPD first. This will let the logging macros from Core/Logging output consistently. 
         Donsol::ConfigureLogging();
-        m_ShutdownProcedure.push_back(&Donsol::ShutdownLogging);
+        AddShutdownProcedure(&Donsol::ShutdownLogging);
 
-        AFEX_LOG_INFO(__FUNCTION__ "()");
+        return true;
+    }
 
-        if (Platform::Window::GlobalInit())
-        {
-            m_ShutdownProcedure.push_back(&Platform::Window::GlobalShutdown);
-        }
-        else
-        {
-            m_ErrorCode = -100;
-            return;
-        }
 
-        m_ImguiContext = ImGui::CreateContext();
-        if (m_ImguiContext)
-        {
-            m_ShutdownProcedure.push_back([ctx = m_ImguiContext]() { ImGui::DestroyContext(ctx); });
-        }
-        else
-        {
-            AFEX_LOG_ERROR("Failed to create imgui context");
-            m_ErrorCode = -200;
-            return;
-        }
+    bool Init() override
+    {
+        Platform::Window& window = GetWindowMutable();
+        Platform::Keyboard& keyboard = window.GetKeyboardMutable();
+        Graphics::RenderEngine& render = GetRenderEngineMutable();
 
-        {
-            Platform::WindowArgs windowArgs(
-                /*title=*/          k_AppName,
-                /*imguiContext=*/   m_ImguiContext,
-                /*width=*/          k_Width,
-                /*height=*/         k_Height);
-            m_Window = std::make_unique<Platform::Window>(windowArgs);
-            if (m_Window->IsValid())
-            {
-                m_ShutdownProcedure.push_back([this]() { m_Window.reset(); });
-            }
-            else
-            {
-                m_ErrorCode = -300;
-                return;
-            }
-        }
-
-        {
-            Graphics::RenderEngineArgs renderArgs(
-                /*nativeWindowHandle=*/ m_Window->GetNativeWindowHandle(),
-                /*imguiContext=*/       m_ImguiContext,
-                /*width=*/              k_Width,
-                /*height=*/             k_Height);
-            m_RenderEngine = std::make_unique<Graphics::RenderEngine>(renderArgs);
-            if (m_RenderEngine->IsValid())
-            {
-                m_ShutdownProcedure.push_back([this]() { m_RenderEngine.reset(); });
-                m_RenderEngine->SetDebugMode(Graphics::DebugMode::Text);
-            }
-            else
-            {
-                m_ErrorCode = -400;
-                return;
-            }
-        }
-
-        {
-            m_ImguiRenderer = std::make_unique<Graphics::ImGuiRenderer>(m_ImguiContext, k_Width, k_Height);
-
-            auto renderSubscription = m_RenderEngine->OnRender().Add(
-                [this]()
-                {
-                    m_ImguiRenderer->Render();
-                });
-
-            m_ShutdownProcedure.push_back(
-                [this, renderSubscription]()
-                {
-                    m_RenderEngine->OnRender().Remove(renderSubscription);
-                    m_ImguiRenderer.reset();
-                });
-        }
-
-        m_ImguiInputProvider = std::make_unique<Platform::ImGuiInputProvider>(
-            /*imguiContext=*/   m_ImguiContext,
-            /*cursor=*/         m_Window->GetCursorMutable(),
-            /*keyboard=*/       m_Window->GetKeyboardMutable());
-        m_ShutdownProcedure.push_back(
-            [this]()
-            {
-                m_ImguiInputProvider.reset();
-            });
-
-        m_Window->OnResize().Add(
-            [this](uint32_t width, uint32_t height)
-            {
-                m_RenderEngine->Resize(width, height);
-                m_ImguiRenderer->Resize(width, height);
-            });
-
-        m_Window->GetKeyboardMutable().OnKeyEvent() +=
-            [window = m_Window.get()](Platform::KeyCode key, int32_t scanCode, Platform::KeyboardAction action, Platform::KeyboardModifier modifiers)
+        keyboard.OnKeyEvent() +=
+            [this, &window, &render](Platform::KeyCode key, int32_t scanCode, Platform::KeyboardAction action, Platform::KeyboardModifier modifiers)
             {
                 AFEX_UNUSED(scanCode);
                 AFEX_UNUSED(modifiers);
 
-                if (action == Platform::KeyboardAction::Release
-                    && key == Platform::KeyCode::Escape)
+                if (action == Platform::KeyboardAction::Release)
                 {
-                    window->RequestClose();
+                    switch(key)
+                    {
+                        case Platform::KeyCode::Escape:
+                            window.RequestClose();
+                            break;
+                        case Platform::KeyCode::F1:
+                            CycleDebugMode();
+                            break;
+                    }
                 }
             };
+        return true;
     }
 
-    ~DonsolApp()
+
+    void Update() override
     {
-        AFEX_LOG_INFO(__FUNCTION__ "()");
-        for (auto it = m_ShutdownProcedure.rbegin(); it != m_ShutdownProcedure.rend(); ++it)
-        {
-            (*it)();
-        }
+        
     }
 
-    int32_t GetErrorCode() const { return m_ErrorCode; }
 
-    int32_t Run()
+    void Render() override
     {
-        while (!m_Window->CloseRequested())
-        {
-            // perform our update logic
-            m_Window->PollEvents();
-            m_ImguiRenderer->BeginFrame();
-            {
-                ImGui::SetNextWindowSize(ImVec2(100, 100), ImGuiCond_Appearing);
-                ImGui::Begin(k_AppName);
-                ImGui::End();
-            }
-            m_ImguiRenderer->EndFrame();
+    }
 
-            m_RenderEngine->SubmitFrame();
-            m_RenderEngine->WaitForRender();
-        }
-        return 0;
+
+    void GUI() override
+    {
     }
 
 private:
-    static constexpr uint32_t k_Width = 1920;
-    static constexpr uint32_t k_Height = 1080;
-
-    ImGuiContext* m_ImguiContext = nullptr;
-    std::unique_ptr<Platform::Window> m_Window;
-    std::unique_ptr<Graphics::RenderEngine> m_RenderEngine;
-    std::unique_ptr<Graphics::ImGuiRenderer> m_ImguiRenderer;
-    std::unique_ptr<Platform::ImGuiInputProvider> m_ImguiInputProvider;
-
-    // during destruction this vector will be iterated in reverse and invoked.
-    std::vector<std::function<void()>> m_ShutdownProcedure;
-
-    int32_t m_ErrorCode = 0;
-};
-
-int main()
-{
-    DonsolApp app;
-    if (app.GetErrorCode() != 0)
+    void CycleDebugMode()
     {
-        return app.GetErrorCode();
+        Graphics::RenderEngine& render = GetRenderEngineMutable();
+        switch(m_DebugMode)
+        {
+            case Graphics::DebugMode::None:
+                m_DebugMode = Graphics::DebugMode::Text;
+                break;
+            case Graphics::DebugMode::Text:
+                m_DebugMode = Graphics::DebugMode::Stats;
+                break;
+            default:
+            case Graphics::DebugMode::Stats:
+                m_DebugMode = Graphics::DebugMode::None;
+                break;
+        }
+        render.SetDebugMode(m_DebugMode);
     }
 
-    return app.Run();
-}
+    Graphics::DebugMode m_DebugMode = Graphics::DebugMode::None;
+};
+
+AFEX_DECLARE_ENTRY_POINT(DonsolApp);

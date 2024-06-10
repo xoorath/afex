@@ -60,6 +60,16 @@ def GetAllProjects() -> list[ProjectBase]:
             ]
         ),
 
+        EngineProject(
+            name="Application", 
+            directory="Engine/Application",
+            engine_dependencies=[
+                EngineDependency(name="Core"),
+                EngineDependency(name="Platform"),
+                EngineDependency(name="Graphics")
+            ]
+        ),
+
         ############################################################################### Games
         GameProject(
             name="HelloWorld",
@@ -67,8 +77,9 @@ def GetAllProjects() -> list[ProjectBase]:
             engine_dependencies=[
                 EngineDependency(name="Core"),
                 EngineDependency(name="Platform"),
-                EngineDependency(name="Graphics")],
-            startup=True
+                EngineDependency(name="Graphics"),
+                EngineDependency(name="Application")
+            ]
         ),
         
         GameProject(
@@ -77,6 +88,9 @@ def GetAllProjects() -> list[ProjectBase]:
             engine_dependencies=[
                 EngineDependency(name="Core"),
                 EngineDependency(name="Platform"),
-                EngineDependency(name="Graphics")]
+                EngineDependency(name="Graphics"),
+                EngineDependency(name="Application")
+            ],
+            startup=True
         ),
     ]

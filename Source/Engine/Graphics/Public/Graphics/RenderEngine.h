@@ -8,12 +8,21 @@
 // System
 #include <cstdint>
 
+//////////////////////////////////////////////////////////////////////////
+
+namespace bgfx
+{
+    struct Stats;
+}
+
+//////////////////////////////////////////////////////////////////////////
 namespace Graphics
 {
     enum class DebugMode : uint8_t;
     class RenderEngineArgs;
     class RenderEngineImpl;
 
+    //////////////////////////////////////////////////////////////////////////
     // The RenderEngine manages our interactions with the rendering backend (bgfx)
     // and sets up the render thread.
     class RenderEngine
@@ -45,7 +54,10 @@ namespace Graphics
         // Callbacks
         GRAPHICS_EXPORT RenderCallback& OnRender();
 
+
+        GRAPHICS_EXPORT const bgfx::Stats* GetStats() const;
+
     private:
-        Core::PIMPL<RenderEngineImpl, 1040> m_PIMPL;
+        Core::PIMPL<RenderEngineImpl, 1920> m_PIMPL;
     };
 }

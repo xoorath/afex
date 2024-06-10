@@ -243,8 +243,12 @@ namespace Graphics
                 /*y=*/          0,
                 /*width=*/      static_cast<uint16_t>(width),
                 /*height=*/     static_cast<uint16_t>(height));
+
+            ImGuiIO& io = ImGui::GetIO();
+            io.DisplaySize.x = static_cast<float>(width);
+            io.DisplaySize.y = static_cast<float>(height);
+
         }
-        //.store((static_cast<uint64_t>(width) << 32ull) | static_cast<uint64_t>(height))
 
         bgfx::touch(Graphics::ViewId::k_ImGui);
 

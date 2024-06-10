@@ -69,6 +69,11 @@ namespace Platform
 
     void KeyboardImpl::GLFWkeyfun(int key, int scancode, int action, int mods)
     {
+        if(key == GLFW_KEY_UNKNOWN)
+        {
+            return;
+        }
+
         KeyboardAction kbAction;
         switch (action)
         {

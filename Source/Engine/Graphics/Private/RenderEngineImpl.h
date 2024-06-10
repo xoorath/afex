@@ -5,6 +5,7 @@
 #include <Graphics/RenderEngineArgs.h>
 
 // External
+#include <bgfx/bgfx.h>
 #include <bx/handlealloc.h>
 #include <bx/spscqueue.h>
 #include <bx/thread.h>
@@ -13,13 +14,23 @@
 // System
 #include <atomic>
 
+//////////////////////////////////////////////////////////////////////////
+
+namespace bgfx
+{
+    struct Stats;
+}
+
+//////////////////////////////////////////////////////////////////////////
 namespace Graphics
 {
+    //////////////////////////////////////////////////////////////////////////
     class RenderEngineImpl
     {
     public:
         explicit RenderEngineImpl(const RenderEngineArgs& args);
         ~RenderEngineImpl();
+
         RenderEngineImpl()                                          = delete;
         RenderEngineImpl(const RenderEngineImpl& args)              = delete;
         RenderEngineImpl& operator=(const RenderEngineImpl& args)   = delete;
@@ -29,17 +40,19 @@ namespace Graphics
         static int32_t StaticRenderThreadFunc(bx::Thread* thread, void* userData);
         int32_t RenderThreadFunc();
 
+        bool IsValid() const;
         void SubmitFrame();
         void WaitForRender();
-
         void Resize(uint32_t width, uint32_t height);
         void SetDebugMode(DebugMode mode);
-
-        RenderEngine::RenderCallback& OnRender() { return m_OnRender; }
-
-        bool IsValid() const { return m_Valid; }
+        RenderEngine::RenderCallback& OnRender();
+        const bgfx::Stats* GetStats() const;
 
     private:
+        // Stats
+        void ResetSamples();
+        void RecordSample(const bgfx::Stats* value);
+
         // Event queue
         bx::DefaultAllocator m_QueueAllocator;
         bx::SpScUnboundedQueue m_RenderThreadEvents;
@@ -61,7 +74,19 @@ namespace Graphics
         RenderEngine::RenderCallback m_OnRender;
 
         // misc.
-        std::atomic_uint32_t m_MainFrameNuber = 0;
+        size_t m_StatsCopyIndex = 0;
+        bgfx::Stats m_StatsCopy[2];
+        struct
+        {
+            static constexpr uint32_t k_NumSamples = 100;
+            int32_t m_offset = 0;
+            float m_values[k_NumSamples] = { 0 };
+
+            float m_min = 0.0f;
+            float m_max = 0.0f;
+            float m_avg = 0.0f;
+        } m_Samples;
+        bool m_showStats = true;
 
         // Stack size, if zero is passed it will use OS default thread stack
         static constexpr uint32_t k_RenderThreadStackSize = 0;

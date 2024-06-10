@@ -44,4 +44,9 @@ namespace Graphics
     {
         return m_PIMPL->OnRender();
     }
+
+    /*GRAPHICS_EXPORT*/ const bgfx::Stats* RenderEngine::GetStats() const
+    {
+        return m_PIMPL->GetStats();
+    }
 }
