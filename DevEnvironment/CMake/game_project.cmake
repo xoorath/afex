@@ -29,6 +29,13 @@ function(declare_game_project engine_library_dependencies)
         CONFIGURE_FILE(${USER_FILE_TEMPLATE} ${USER_FILE_DESTINATION} @ONLY)
 
         set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "1 Game")
+
+        file(GLOB_RECURSE NATVIS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.natvis")
+        if (NATVIS_FILES)
+            source_group("Natvis Files" FILES ${NATVIS_FILES})
+            set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_ENVIRONMENT "${NATVIS_FILES}")
+            target_sources(${PROJECT_NAME} PRIVATE ${NATVIS_FILES})
+        endif()
     endif()
 
     copy_third_party_dlls()
