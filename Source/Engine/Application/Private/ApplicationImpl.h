@@ -1,6 +1,7 @@
 #pragma once
 
 // Engine
+#include <Core/Config/Config.h>
 #include <Platform/HMI/ImguiInputProvider.h>
 #include <Platform/Window.h>
 #include <Graphics/ImguiRenderer.h>
@@ -25,7 +26,7 @@ namespace Application
     class ApplicationImpl
     {
     public:
-        ApplicationImpl()                                           = default;
+        ApplicationImpl();
         ~ApplicationImpl();
         ApplicationImpl(const ApplicationImpl&)                     = delete;
         ApplicationImpl(ApplicationImpl&&) noexcept                 = delete;
@@ -49,17 +50,16 @@ namespace Application
         const Platform::Window& GetWindow() const { return m_Window.value(); }
         Platform::Window& GetWindowMutable() { return m_Window.value(); }
 
-        float GetRenderScale() const;
-        void SetRenderScale(float scale);
+        // Gets the render resolution. If the render resolution is not manually set: the
+        // window resolution is used.
+        void GetRenderResolution(uint32_t& outWidth, uint32_t& outHeight) const;
+        // Sets the desired render resolution. This resolution will be kept even as the window resizes.
+        void SetRenderResolution(uint32_t width, uint32_t height);
+        // The render resolution will be set to (and kept to) the window native resolution.
+        void UnsetRenderResolution();
         
     private:
-        // Future configurable values:
-        struct
-        {
-            uint32_t GetWidth() const { return 1920; }
-            uint32_t GetHeight() const { return 1080; }
-            std::string_view GetTitle() const { return "AFEX"; }
-        } m_Config;
+        Core::Config m_Config;
 
         ImGuiContext* m_ImguiContext = nullptr;
         std::optional<Platform::Window> m_Window;
@@ -70,6 +70,7 @@ namespace Application
         // during destruction this vector will be iterated in reverse and invoked.
         std::vector<std::tuple<std::string, std::function<void()>>> m_ShutdownProcedure;
 
-        float m_RenderScale = 1.0f;
+        std::optional<uint32_t> m_RenderResolutionWidth;
+        std::optional<uint32_t> m_RenderResolutionHeight;
     };
 }

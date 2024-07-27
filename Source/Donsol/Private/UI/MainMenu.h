@@ -36,10 +36,18 @@ namespace Donsol::UI
         DifficultyChangedDelegate& OnDifficultyChanged();
         ResolutionScaleChangedDelegate& OnResolutionScaleChanged();
 
+        // Tries to set the difficulty by name (case insensitive)
+        // The name of the difficulty set will be returned, using a default difficulty
+        // if the difficulty provided could not be found
+        const std::string_view TrySetDifficulty(std::string_view value);
+        // Tries to set the resolution scale. If the value is not one of the supported resolution scales
+        // the closest value will be set instead and the value set will be returned.
+        float TrySetResolutionScale(float value);
+
     private:
         void GUI_Menu();
         void GUI_Play();
-        void GUI_Settings();
+        void GUI_Config();
 
         void SetDifficultyIndex(int32_t index);
         void SetResolutionScaleIndex(int32_t index);
@@ -48,7 +56,7 @@ namespace Donsol::UI
         {
             Menu,
             Play,
-            Settings
+            Config
         };
         State m_State = State::Menu;
 

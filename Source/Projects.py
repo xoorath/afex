@@ -19,6 +19,14 @@ def GetAllProjects() -> list[ProjectBase]:
                     require="spdlog/1.14.1",
                     cmake_name = "spdlog::spdlog",
                     options=[ConanDependencyOption("shared", True)]
+                ),
+                ConanDependency(
+                    require="tomlplusplus/3.4.0",
+                    cmake_name = "tomlplusplus::tomlplusplus",
+                    options=[
+                        ConanDependencyOption("shared", True),
+                        ConanDependencyOption("TOML_EXCEPTIONS", False)
+                    ]
                 )
             ],
             defines=["SPDLOG_ACTIVE_LEVEL=0"]

@@ -190,8 +190,8 @@ namespace Platform
         m_CursorPositionSubscription = cursor.OnCursorPosition().Add(
             [this](float xPos, float yPos)
             {
-                xPos /= m_ResolutionScale;
-                yPos /= m_ResolutionScale;
+                xPos *= m_InputScaleX;
+                yPos *= m_InputScaleY;
 
                 ImGuiIO& io = ImGui::GetIO();
                 io.AddMousePosEvent(xPos, yPos);
@@ -221,8 +221,9 @@ namespace Platform
         m_Cursor.OnMouseButton().Remove(m_CursorButtonSubscription);
     }
 
-    void ImGuiInputProviderImpl::SetResolutionScale(float scale)
+    void ImGuiInputProviderImpl::SetInputScale(float inputScaleX, float inputScaleY)
     {
-        m_ResolutionScale = scale;
+        m_InputScaleX = inputScaleX;
+        m_InputScaleY = inputScaleY;
     }
 }

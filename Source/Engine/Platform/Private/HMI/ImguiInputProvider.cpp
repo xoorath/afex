@@ -19,8 +19,8 @@ namespace Platform
     /*PLATFORM_EXPORT*/ ImGuiInputProvider& ImGuiInputProvider::operator=(ImGuiInputProvider&& other) noexcept = default;
     /*PLATFORM_EXPORT*/ ImGuiInputProvider::~ImGuiInputProvider() = default;
 
-    /*PLATFORM_EXPORT*/ void ImGuiInputProvider::SetResolutionScale(float scale)
+    /*PLATFORM_EXPORT*/ void ImGuiInputProvider::SetInputScale(float scaleX, float scaleY)
     {
-        m_PIMPL->SetResolutionScale(scale);
+        m_PIMPL->SetInputScale(scaleX, scaleY);
     }
 }

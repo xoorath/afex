@@ -10,6 +10,9 @@
 #include <imgui.h>
 #include <sstream>
 
+// System
+#include <algorithm>
+
 //////////////////////////////////////////////////////////////////////////
 namespace Donsol::UI
 {
@@ -36,8 +39,8 @@ namespace Donsol::UI
         case State::Play:
             GUI_Play();
             break;
-        case State::Settings:
-            GUI_Settings();
+        case State::Config:
+            GUI_Config();
             break;
         }
     }
@@ -50,6 +53,46 @@ namespace Donsol::UI
     MainMenu::ResolutionScaleChangedDelegate& MainMenu::OnResolutionScaleChanged()
     {
         return m_OnResolutionScaleChanged;
+    }
+
+    const std::string_view MainMenu::TrySetDifficulty(std::string_view value)
+    {
+        std::string difficultyValue(value);
+        std::transform(difficultyValue.begin(), difficultyValue.end(), difficultyValue.begin(), [](unsigned char c) {
+            return std::tolower(c);
+        });
+        for (size_t i = 0; i < Difficulty::GetDifficultyCount(); ++i)
+        {
+            auto& dif = Difficulty::GetDifficulty(i);
+            std::string lowerDifName(dif.GetName());
+            std::transform(lowerDifName.begin(), lowerDifName.end(), lowerDifName.begin(), [](unsigned char c) {
+                return std::tolower(c);
+            });
+            if (difficultyValue == lowerDifName)
+            {
+                SetDifficultyIndex(static_cast<int32_t>(i));
+                return dif.GetName();
+            }
+        }
+        SetDifficultyIndex(0);
+        return Difficulty::GetDifficulty(0).GetName();
+    }
+
+    float MainMenu::TrySetResolutionScale(float value)
+    {
+        const float scales[] = {1.0f, 2.0f, 3.0f};
+        float closest = scales[0];
+        float smallestDiff = std::abs(value-scales[0]);
+        for(size_t i = 1; i < (sizeof(scales)/sizeof(scales[0])); ++i)
+        {
+            float diff = std::abs(value-scales[i]);
+            if(diff < smallestDiff)
+            {
+                smallestDiff = diff;
+                closest = scales[i];
+            }
+        }
+        return closest;
     }
 
     ////////////////////////////////////////////////////////////////////////// Private
@@ -78,8 +121,8 @@ namespace Donsol::UI
 
         ImGui::SetCursorPosX((windowSize.x - buttonSize.x) * 0.5f);
         ImGui::SetCursorPosY((windowSize.y - buttonSize.y) * 0.6f);
-        if (ImGui::Button("Settings", buttonSize)) {
-            m_State = State::Settings;
+        if (ImGui::Button("Config", buttonSize)) {
+            m_State = State::Config;
         }
 
         ImGui::End();
@@ -110,7 +153,7 @@ namespace Donsol::UI
         ImGui::End();
     }
 
-    void MainMenu::GUI_Settings()
+    void MainMenu::GUI_Config()
     {
         const float windowWidth = 400.0f; // Width of the settings window
         const float windowHeight = 350.0f; // Height of the settings window
@@ -129,7 +172,7 @@ namespace Donsol::UI
         ImGui::SetNextWindowSize(windowSize);
 
         ImGui::Begin(
-            "Settings",
+            "Config",
             nullptr,
             ImGuiWindowFlags_NoTitleBar
             | ImGuiWindowFlags_NoResize

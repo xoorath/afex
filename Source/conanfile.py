@@ -20,7 +20,6 @@ class sourceRecipe(ConanFile):
                         allRequires.append(dep.require)
         for req in allRequires:
             self.requires(req)
-            
 
     def configure(self):
         self.settings.compiler.cppstd="20"

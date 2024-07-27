@@ -4,16 +4,16 @@ function(declare_engine_project)
     declare_common_project(TRUE)
     set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "0 Engine")
     generate_export_header(${PROJECT_NAME}
-            EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/GeneratedHeaders/${PROJECT_NAME}/include/${PROJECT_NAME}/${PROJECT_NAME}.export.h"
+    EXPORT_FILE_NAME "${CMAKE_BINARY_DIR}/GeneratedHeaders/${PROJECT_NAME}/include/${PROJECT_NAME}/${PROJECT_NAME}.export.h"
     )
     target_include_directories(${PROJECT_NAME}
         PUBLIC
             "Public/"
             "${CMAKE_BINARY_DIR}/GeneratedHeaders/${PROJECT_NAME}/include/"
     )
-
-    ########################################################## Setup Visual Studio
+    target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
     
+    ########################################################## Setup Visual Studio
     if (MSVC)
         file(GLOB_RECURSE NATVIS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.natvis")
         if (NATVIS_FILES)

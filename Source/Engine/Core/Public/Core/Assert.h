@@ -24,12 +24,15 @@
         static bool alwaysIgnore = false;                                                                       \
         if (!alwaysIgnore)                                                                                      \
         {                                                                                                       \
-            Core::g_Logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},                        \
-                spdlog::level::critical,                                                                   \
-                std::format(                                                                                    \
-                    "Assert failed.\n"                                                                          \
-                    "{}",                                                                                       \
-                    std::format(__VA_ARGS__)));                                                                 \
+            if(Core::g_Logger)                                                                                  \
+            {                                                                                                   \
+                Core::g_Logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},                    \
+                    spdlog::level::critical,                                                                    \
+                    std::format(                                                                                \
+                        "Assert failed.\n"                                                                      \
+                        "{}",                                                                                   \
+                        std::format(__VA_ARGS__)));                                                             \
+            }                                                                                                   \
             switch(Core::Internal::HandleAssertion("AFEX_ASSERT_FAIL",  std::format(__VA_ARGS__)))              \
             {                                                                                                   \
                 case Core::Internal::DevAssertionResponse::BreakInDebugger: { AFEX_DEBUG_BREAK(); break;}       \
@@ -49,13 +52,16 @@
         if (!((condition)) && !alwaysIgnore)                                                                    \
         _Pragma("warning(pop)")                                                                                 \
         {                                                                                                       \
-            Core::g_Logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},                        \
-                spdlog::level::critical,                                                                   \
-                std::format(                                                                                    \
-                    "Assert({}) failed.\n"                                                                      \
-                    "{}",                                                                                       \
-                    #condition,                                                                                 \
-                    std::format(__VA_ARGS__)));                                                                 \
+            if(Core::g_Logger)                                                                                  \
+            {                                                                                                   \
+                Core::g_Logger->log(spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION},                    \
+                    spdlog::level::critical,                                                                    \
+                    std::format(                                                                                \
+                        "Assert({}) failed.\n"                                                                  \
+                        "{}",                                                                                   \
+                        #condition,                                                                             \
+                        std::format(__VA_ARGS__)));                                                             \
+            }                                                                                                   \
             switch(Core::Internal::HandleAssertion(#condition,  std::format(__VA_ARGS__)))                      \
             {                                                                                                   \
                 case Core::Internal::DevAssertionResponse::BreakInDebugger: { AFEX_DEBUG_BREAK(); break;}       \

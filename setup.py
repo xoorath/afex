@@ -57,6 +57,7 @@ def SetupConan(buildType : str):
                     "install", conanfile,
                     "-of", conanTempDir,
                     "-s", f"build_type={buildType}",
+                    "-s", "compiler.cppstd=20",
                     "--build=missing",
                     "--deployer=full_deploy", 
                     f"--deployer-folder={GetCMakeTempDir(buildType)}"], 
@@ -204,13 +205,13 @@ def GenerateCMakeLists():
                             break
         CMakeListsFile.close()
 
-    
-
 def SetupCMake(buildType : str):
     import subprocess
     cmakeSourceDir = os.path.join(SCRIPT_DIR, "Source")
     cmakeBuildDir = GetCMakeTempDir(buildType)
     packageInstallDir = os.path.join(cmakeBuildDir, "Package")
+    conanTempDir = GetConanTempDir(buildType)
+    toolchainFile = os.path.join(conanTempDir, "build", "generators", "conan_toolchain.cmake")
     
     PrintContext(f"packageInstallDir: {packageInstallDir}")
 
@@ -220,7 +221,8 @@ def SetupCMake(buildType : str):
                     "--preset", f"conan-default-{buildType.lower()}",
                     f"-DCMAKE_BUILD_TYPE={buildType}", 
                     f"-DCMAKE_CONFIGURATION_TYPES={buildType}",
-                    f"-DCMAKE_INSTALL_PREFIX={packageInstallDir}"])
+                    f"-DCMAKE_INSTALL_PREFIX={packageInstallDir}",
+                    f"-DCMAKE_TOOLCHAIN_FILE={toolchainFile}"])
     if completedProcess.returncode != 0:
         PrintError(f"cmake exited with code {completedProcess.returncode}")
 

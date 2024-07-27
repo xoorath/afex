@@ -6,6 +6,7 @@ function(declare_game_project engine_library_dependencies)
         PUBLIC
             "Public/"
     )
+    target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
     ########################################################## Collect info on dependencies
 

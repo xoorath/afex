@@ -18,6 +18,11 @@
 namespace Application
 {
     ////////////////////////////////////////////////////////////////////////// Public
+    ApplicationImpl::ApplicationImpl()
+        : m_Config("afex")
+    {
+    }
+
     ApplicationImpl::~ApplicationImpl()
     {
         AFEX_LOG_TRACE(__FUNCTION__ "()");
@@ -56,9 +61,9 @@ namespace Application
         }
 
         ////////////////////////////////////////////////////////////////////////// Window
-        const uint32_t width = m_Config.GetWidth();
-        const uint32_t height = m_Config.GetHeight();
-        const std::string_view title = m_Config.GetTitle();
+        const uint32_t width =      m_Config.GetSetting<uint32_t>("window.width", 1920);
+        const uint32_t height =     m_Config.GetSetting<uint32_t>("window.height", 1080);
+        const std::string title =   m_Config.GetSetting<std::string>("window.title", "afex");
 
         const Platform::WindowArgs windowArgs(title, m_ImguiContext, width, height);
         m_Window.emplace(windowArgs);
@@ -117,10 +122,13 @@ namespace Application
         auto resizeSubscription = m_Window->OnResize().Add(
             [this](uint32_t width, uint32_t height)
             {
-                width = static_cast<uint32_t>(static_cast<float>(width) / m_RenderScale);
-                height = static_cast<uint32_t>(static_cast<float>(height) / m_RenderScale);
-                m_RenderEngine->Resize(width, height);
-                m_ImguiRenderer->Resize(width, height);
+                // If the render resolution is set manually: do not resize automatically.
+                // The application can always do that themselves.
+                if(!m_RenderResolutionWidth.has_value() && !m_RenderResolutionHeight.has_value())
+                {
+                    m_RenderEngine->Resize(width, height);
+                    m_ImguiRenderer->Resize(width, height);
+                }
             });
         AddShutdownProcedure("Resize Subscription",
             [this, resizeSubscription]()
@@ -166,22 +174,71 @@ namespace Application
         m_ShutdownProcedure.push_back(std::make_tuple(std::string(debugName), procedure));
     }
 
-    float ApplicationImpl::GetRenderScale() const
+    void ApplicationImpl::GetRenderResolution(uint32_t& outWidth, uint32_t& outHeight) const
     {
-        return m_RenderScale;
+        if(m_RenderResolutionWidth.has_value() || m_RenderResolutionHeight.has_value())
+        {
+            if (m_RenderResolutionWidth.has_value())
+            {
+                outWidth = m_RenderResolutionWidth.value();
+            }
+            if (m_RenderResolutionHeight.has_value())
+            {
+                outHeight = m_RenderResolutionHeight.value();
+            }
+        }
+        else
+        {
+            m_Window->GetSize(outWidth, outHeight);
+        }
     }
 
-    void ApplicationImpl::SetRenderScale(float scale)
+    void ApplicationImpl::SetRenderResolution(uint32_t width, uint32_t height)
     {
-        m_RenderScale = scale;
+        AFEX_ASSERT(width > 0);
+        AFEX_ASSERT(height > 0);
 
-        uint32_t width, height;
-        m_Window->GetSize(width, height);
-        width = static_cast<uint32_t>(static_cast<float>(width) / m_RenderScale);
-        height = static_cast<uint32_t>(static_cast<float>(height) / m_RenderScale);
+        uint32_t windowWidth, windowHeight;
+        m_Window->GetSize(windowWidth, windowHeight);
+
+        if(width == windowWidth && height == windowHeight)
+        {
+            m_RenderResolutionWidth.reset();
+            m_RenderResolutionHeight.reset();
+        }
+        else
+        {
+            m_RenderResolutionWidth = width;
+            m_RenderResolutionHeight = height;
+        }
 
         m_RenderEngine->Resize(width, height);
         m_ImguiRenderer->Resize(width, height);
-        m_ImguiInputProvider->SetResolutionScale(m_RenderScale);
+
+        // Raw input is in window coordinates but we will be rendering at a different resolution.
+        // Because of that we need to scale the input to ensure the render input lines up.
+
+        const float inputScaleX = 
+            static_cast<float>(width) / 
+            static_cast<float>(windowWidth);
+        const float inputScaleY = 
+            static_cast<float>(height) /
+            static_cast<float>(windowHeight);
+
+        m_ImguiInputProvider->SetInputScale(inputScaleX, inputScaleY);
+    }
+
+    void ApplicationImpl::UnsetRenderResolution()
+    {
+        uint32_t windowWidth, windowHeight;
+        m_Window->GetSize(windowWidth, windowHeight);
+
+        m_RenderResolutionWidth.reset();
+        m_RenderResolutionHeight.reset();
+
+        m_RenderEngine->Resize(windowWidth, windowHeight);
+        m_ImguiRenderer->Resize(windowWidth, windowHeight);
+
+        m_ImguiInputProvider->SetInputScale(1.0f, 1.0f);
     }
 }

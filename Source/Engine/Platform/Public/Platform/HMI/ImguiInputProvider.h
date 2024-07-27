@@ -31,7 +31,7 @@ namespace Platform
         // Resolution scale impacts cursor position
         // Note: that the scale is inverse of the resolution.
         // ie: a 2x scale means you have 1/2 the pixels.
-        PLATFORM_EXPORT void SetResolutionScale(float scale);
+        PLATFORM_EXPORT void SetInputScale(float scaleX, float scaleY);
 
     private:
         Core::PIMPL<ImGuiInputProviderImpl, 144> m_PIMPL;

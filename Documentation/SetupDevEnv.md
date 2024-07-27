@@ -13,7 +13,7 @@ The following tools are used for the windows development environment and should 
 
 * [Visual Studio 2022 (Version 17.10.0)](https://visualstudio.microsoft.com/downloads/)
 * [CMake 3.29](https://cmake.org/download/)
-* [Conan 2.1.0](https://conan.io/downloads)
+* [Conan 2.4.1conan](https://conan.io/downloads)
 * [Python 3.11.5](https://www.python.org/downloads/)
 
 For CMake, Conan and Python: please check that these tools are available at your system path by running their help commands from a terminal.

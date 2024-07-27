@@ -79,12 +79,13 @@ namespace Application
         APPLICATION_EXPORT Platform::Window& GetWindowMutable();
 
         //////////////////////////////////////////////////////////////////////////
-        // Settings:
-        APPLICATION_EXPORT float GetRenderScale() const;
-        APPLICATION_EXPORT void SetRenderScale(float scale);
+        // Config:
 
-    
+        APPLICATION_EXPORT void GetRenderResolution(uint32_t& outWidth, uint32_t& outHeight) const;
+        // The render resolution will default to the window size unless overridden here.
+        APPLICATION_EXPORT void SetRenderResolution(uint32_t width, uint32_t height);
+
     private:
-        Core::PIMPL<ApplicationImpl, 3152> m_PIMPL;
+        Core::PIMPL<ApplicationImpl, 3320> m_PIMPL;
     };
 }

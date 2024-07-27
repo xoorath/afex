@@ -53,14 +53,14 @@ namespace Application
         return 0;
     }
 
-    /*APPLICATION_EXPORT*/ float Application::GetRenderScale() const
+    /*APPLICATION_EXPORT*/ void Application::GetRenderResolution(uint32_t& outWidth, uint32_t& outHeight) const
     {
-        return m_PIMPL->GetRenderScale();
+        m_PIMPL->GetRenderResolution(outWidth, outHeight);
     }
 
-    /*APPLICATION_EXPORT*/ void Application::SetRenderScale(float scale)
+    /*APPLICATION_EXPORT*/ void Application::SetRenderResolution(uint32_t width, uint32_t height)
     {
-        m_PIMPL->SetRenderScale(scale);
+        m_PIMPL->SetRenderResolution(width, height);
     }
 
     ////////////////////////////////////////////////////////////////////////// Protected

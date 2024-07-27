@@ -7,6 +7,7 @@
 #include <Application/Application.h>
 #include <Application/EntryPoint.h>
 #include <Core/CommonMacros.h>
+#include <Core/Config/Config.h>
 #include <Core/Logging.h>
 #include <Graphics/DebugMode.h>
 #include <Graphics/RenderEngine.h>
@@ -18,6 +19,7 @@ namespace Donsol
     class DonsolApp : public Application::Application
     {
     protected:
+
         bool EarlyInit() override
         {
             ConfigureLogging();
@@ -31,6 +33,8 @@ namespace Donsol
             Platform::Window& window        = GetWindowMutable();
             Platform::Keyboard& keyboard    = window.GetKeyboardMutable();
             Graphics::RenderEngine& render  = GetRenderEngineMutable();
+
+            m_Config.emplace("donsol");
 
             render.SetDebugMode(m_DebugMode);
             keyboard.OnKeyEvent() +=
@@ -53,19 +57,47 @@ namespace Donsol
                     }
                 };
 
+
+            bool saveConfig = false;
+            
+            std::string difficultyValue = m_Config->GetSetting<std::string>("donsol.difficulty", "casual");
+            const std::string_view actualDifficulty = m_MainMenu.TrySetDifficulty(difficultyValue);
+            if(difficultyValue != actualDifficulty)
+            {
+                m_Config->SetSetting("donsol.difficulty", std::string(actualDifficulty));
+                saveConfig = true;
+            }
             m_MainMenu.OnDifficultyChanged() += 
-                [](const Donsol::Difficulty& difficulty, size_t index)
+                [this](const Donsol::Difficulty& difficulty, size_t index)
                 {
                     AFEX_UNUSED(index);
-                    AFEX_LOG_INFO("Difficulty changed to {}", difficulty.GetName());
+                    m_Config->SetSetting<std::string>("donsol.difficulty", std::string(difficulty.GetName()));
+                    m_Config->Save();
                 };
 
+            const float resolutionScaleValue = m_Config->GetSetting<float>("donsol.resolution_scale", 1.0);
+            const float actualResolutionScale = m_MainMenu.TrySetResolutionScale(resolutionScaleValue);
+            if(resolutionScaleValue != actualResolutionScale)
+            {
+                m_Config->SetSetting<float>("donsol.resolution_scale", actualResolutionScale);
+                saveConfig = true;
+            }
             m_MainMenu.OnResolutionScaleChanged() +=
-                [this](float scale)
+                [this, &window](float scale)
                 {
-                    AFEX_LOG_INFO("Resolution scale changed to {}", scale);
-                    SetRenderScale(scale);
+                    uint32_t renderWidth, renderHeight;
+                    window.GetSize(renderWidth, renderHeight);
+                    SetRenderResolution(
+                        static_cast<uint32_t>(static_cast<float>(renderWidth) * scale),
+                        static_cast<uint32_t>(static_cast<float>(renderHeight) * scale));
+                    m_Config->SetSetting<float>("donsol.resolution_scale", scale);
+                    m_Config->Save();
                 };
+
+            if(saveConfig)
+            {
+                m_Config->Save();
+            }
 
             return true;
         }
@@ -107,6 +139,7 @@ namespace Donsol
             render.SetDebugMode(m_DebugMode);
         }
 
+        std::optional<Core::Config> m_Config;
         Graphics::DebugMode m_DebugMode = Graphics::DebugMode::None;
         // Screens
         UI::MainMenu m_MainMenu;

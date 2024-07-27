@@ -29,8 +29,11 @@ namespace Platform
         ImGuiInputProviderImpl(ImGuiInputProviderImpl&&) noexcept               = default;
         ImGuiInputProviderImpl& operator=(const ImGuiInputProviderImpl&)        = default;
         ImGuiInputProviderImpl& operator=(ImGuiInputProviderImpl&&) noexcept    = default;
-        
-        void SetResolutionScale(float scale);
+
+        // The input can be scaled if the resolution and window resolution are not the same
+        // For example: if the window is 1000x1000 and we are rendering imgui at 100x100
+        // we will want to scale the inputs by 0.1f so the cursor (in window coords) lines up with the graphics.
+        void SetInputScale(float inputScaleX, float inputScaleY);
 
     private:
         Cursor& m_Cursor;
@@ -43,6 +46,7 @@ namespace Platform
         MouseButtonCallbackType::Token m_CursorButtonSubscription;
         ScrollCallbackType::Token m_CursorScrollSubscription;
 
-        float m_ResolutionScale = 1.0f;
+        float m_InputScaleX = 1.0f;
+        float m_InputScaleY = 1.0f;
     };
 }
