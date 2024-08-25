@@ -2,7 +2,7 @@
 
 // Engine
 #include <Core/Config/Config.h>
-#include <Core/Filesystem.h>
+#include <Core/Filesystem/Filesystem.h>
 #include <Platform/HMI/ImguiInputProvider.h>
 #include <Platform/Window.h>
 #include <Graphics/ImguiRenderer.h>
@@ -11,6 +11,7 @@
 // System
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string_view>
 #include <tuple>
@@ -45,6 +46,7 @@ namespace Application
         void WaitForRenderer();
 
         void AddShutdownProcedure(std::string_view debugName, std::function<void()> procedure);
+        void RunShutdownProcedure();
 
         const Core::Filesystem& GetFilesystem() const { return m_Filesystem.value(); }
 
@@ -61,9 +63,13 @@ namespace Application
         void SetRenderResolution(uint32_t width, uint32_t height);
         // The render resolution will be set to (and kept to) the window native resolution.
         void UnsetRenderResolution();
+
+        // This uses a default logging configuration that the application may use 
+        // to avoid implementing their own logging config.
+        void ConfigureLogging();
         
     private:
-        std::optional<Core::Config> m_Config;
+        std::shared_ptr<Core::Config> m_Config;
 
         ImGuiContext* m_ImguiContext = nullptr;
         std::optional<Core::Filesystem> m_Filesystem;

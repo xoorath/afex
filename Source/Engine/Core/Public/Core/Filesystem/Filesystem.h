@@ -2,19 +2,19 @@
 
 // Engine
 #include <Core/Core.export.h>
-#include <Core/Text.h>
+#include <Core/PIMPL.h>
 
 // System
 #include <cstdint>
 #include <filesystem>
-#include <vector>
-#include <map>
 
 //////////////////////////////////////////////////////////////////////////
 namespace Core
 {
     //////////////////////////////////////////////////////////////////////////
     class Config;
+    class FilesystemImpl;
+    enum class ResolvePathResult : uint8_t;
 
     //////////////////////////////////////////////////////////////////////////
     // The filesystem's primary purpose is the management of special path 
@@ -107,68 +107,10 @@ namespace Core
         CORE_EXPORT Filesystem& operator=(Filesystem&&) noexcept;   /*= default*/
         CORE_EXPORT ~Filesystem();                                  /*= default*/
 
-        enum class ResolvePathResult
-        {
-            // A path to be resolved may not be empty
-            ErrorEmpty,
-
-            // One or more characters in the path are invalid
-            ErrorInvalid,
-
-            // The path contained multiple variables.
-            // Only one variable is allowed and only at the beginning of a path.
-            ErrorMupltipleVariables,
-
-            // The placement of a variable is invalid.
-            // Only one variable is allowed and only at the beginning of a path.
-            ErrorVariablePlacement,
-
-            // Variables may only exist alone in a path part before a separator
-            // Example: "{{app}}foo/bar" is invalid. "{{app}}/foo/bar" is valid.
-            ErrorVariableConcatenated,
-
-            // The path was resolved. The existence of that file/directory was not checked. 
-            Resolved,
-
-            // The path was resolved and a file or directory exists at that location.
-            // The existence of a path is checked when the path is under {{assets}}
-            ResolvedFound,
-
-            // The path was resolved and no file or directory exists at that location
-            // The existence of a path is checked when the path is under {{assets}}
-            ResolvedNotFound
-        };
-
         // Creates an absolute path from a path that may be relative and/or contain variables.
         CORE_EXPORT ResolvePathResult ResolvePath(const std::filesystem::path& pathIn, std::filesystem::path& outPath) const;
 
-        // Returns true if the result arg is any error type
-        CORE_EXPORT static bool ResolvePathResultIsError(ResolvePathResult result);
-
-        // Get a human readable string for the path result
-        CORE_EXPORT static const std::string_view ResolvePathResultToString(ResolvePathResult result);
-
-
-        // Special named variables that can be substituted when resolving a path.
-        // Only one of these variables may be used and must always be the first part of a path.
-        static const std::string_view s_App;
-        static const std::string_view s_Assets;
-        static const std::string_view s_Cwd;
-        static const std::string_view s_Local;
-        static const std::string_view s_Roaming;
-        static const std::string_view s_Temp;
-
-        using VarMap = std::map<std::string_view, std::filesystem::path,
-            Core::Text::Comparitor<Core::Text::OrderingRules::CaseInsensitive>>;
     private:
-
-        // An ordered collection of asset directories.
-        // The first asset directory will be used first when resolving asset paths.
-        std::vector<std::filesystem::path> m_AssetDirectories;
-
-        // Maps variable names (s_App, ...etc) to paths at startup
-        // these values are assumed to not change after the filesystem is created.
-        // The assets path is not mapped as it's not a constant 1:1 relationship
-        VarMap m_VariableMap;
+        PIMPL<FilesystemImpl, 56> m_PIMPL;
     };
 }

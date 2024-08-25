@@ -128,7 +128,15 @@ namespace Application
         // The render resolution will default to the window size unless overridden here.
         APPLICATION_EXPORT void SetRenderResolution(uint32_t width, uint32_t height);
 
+
+        //////////////////////////////////////////////////////////////////////////
+        // Default configurations:
+        //  It's expected that applications may wish to use these configuration
+        //  functions when being first developed and then fine tune these default
+        //  configs later
+
+        APPLICATION_EXPORT void ConfigureLogging();
     private:
-        Core::PIMPL<ApplicationImpl, 3408> m_PIMPL;
+        Core::PIMPL<ApplicationImpl, 3248> m_PIMPL;
     };
 }

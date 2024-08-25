@@ -23,21 +23,25 @@ namespace Application
         
         if(!m_PIMPL->EarlyInit(argc, argv))
         {
+            m_PIMPL->RunShutdownProcedure();
             return -101;
         }
 
         if(!EarlyInit())
         {
+            m_PIMPL->RunShutdownProcedure();
             return -100;
         }
 
         if(!m_PIMPL->Init())
         {
+            m_PIMPL->RunShutdownProcedure();
             return -200;
         }
 
         if(!Init())
         {
+            m_PIMPL->RunShutdownProcedure();
             return -201;
         }
 
@@ -53,6 +57,7 @@ namespace Application
             m_PIMPL->WaitForRenderer();
         }
 
+        m_PIMPL->RunShutdownProcedure();
         return 0;
     }
 
@@ -96,5 +101,10 @@ namespace Application
     /*APPLICATION_EXPORT*/ Platform::Window& Application::GetWindowMutable()
     {
         return m_PIMPL->GetWindowMutable();
+    }
+
+    /*APPLICATION_EXPORT*/ void Application::ConfigureLogging()
+    {
+        m_PIMPL->ConfigureLogging();
     }
 }

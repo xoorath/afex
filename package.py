@@ -3,12 +3,13 @@ import os
 import shutil
 import pefile
 import fnmatch
+import tomli
+import tomli_w
 from DevEnvironment.BuildFormatting import BeginSection, EndSection, PrintContext, PrintError
-from Source.Projects import GetAllProjects, GameProject
+from Source.Projects import GetAllProjects, GameProject, ProjectBase
 
 # Easily Configurable:
 TEMP_DIR_NAME = "Generated"
-PROJECT_ROOTS = [ "Source" ]
 POSSIBLE_CONFIGS = ["Debug", "Release"]
 POSSIBLE_TARGETS = [project.name for project in GetAllProjects() if isinstance(project, GameProject)]
 
@@ -105,9 +106,77 @@ def CopyTargetDllsRecursively(
                         shutil.copy2(foundFiles[0], destinationDir)
                         CopyTargetDllsRecursively(target, config, foundFiles[0], destinationDir)
 
+def CopyAFEXConfigFiles(targetProject:ProjectBase, destinationPackage:str):
+    afexConfigsRoot = os.path.join(SCRIPT_DIR, "Source", targetProject.directory, "Configs")
+    if os.path.exists(afexConfigsRoot) and os.path.isdir(afexConfigsRoot):
+        shutil.copytree(afexConfigsRoot, destinationPackage, dirs_exist_ok=True)
+
+# This function will perform afex path string replacements similar to how they're done in engine
+# a few differences, though:
+#   1) far less error checking, it's assumed the dev isn't doing anything crazy
+#   2) Only {{app}} and {{cwd}} are respected. They are assumed to be the executable path
+def ResolveAndCopyAssetDirectory(destinationAssetsDir:str, configuredAssetsDir:str, target:str, config:str):
+    cmakeDir = GetCMakeTempDir(config)
+    targetDir = os.path.join(cmakeDir, target)
+    appPath = os.path.join(targetDir, config)
+
+    # todo: perform these replacements case insensitively
+    # todo: replace any leading "./" as well, treating it like cwd
+    if configuredAssetsDir.find("{{app}}") != -1:
+        configuredAssetsDir = configuredAssetsDir.replace("{{app}}", appPath)
+    elif configuredAssetsDir.find("{{cwd}}") != -1:
+        configuredAssetsDir = configuredAssetsDir.replace("{{cwd}}", appPath)
+
+    if os.path.exists(configuredAssetsDir) and os.path.isdir(configuredAssetsDir):
+        shutil.copytree(configuredAssetsDir, destinationAssetsDir, dirs_exist_ok=True)
+
+# todo: handle toml parse errors
+def CopyAssets(destinationPackage:str, target:str, config:str):
+    # this assumes we successfully copied the engine config from a Configs directory already
+    engineConfigPath = os.path.join(destinationPackage, "afex.toml")
+
+    if not os.path.exists(engineConfigPath):
+        PrintError(f"Couldn't find afex.toml in the destination package folder for {target} {config}. "
+            "that probably indicates there wasn't an afex.toml file in a directory named Configs "
+            "in the source directory of that project. This won't break the package but might indicate a mistake.")
+        return
+    
+    afexConfig:dict[str,any]=None
+    with open(engineConfigPath, 'rb') as file:
+        try:
+            afexConfig = tomli.load(file)
+        except tomli.TOMLDecodeError:
+            PrintError("Failed to decode the engine config at {engineConfigPath}.\n"
+                       "This is probably an unrecoverable error but we will try to continue.")
+            return
+        
+        if ('filesystem' not in afexConfig) or (not isinstance(afexConfig['filesystem'], dict)):
+            PrintError(f"The engine config for {target} {config} did not contain a dictionary named filesystem")
+            return
+        
+        if ('asset_directories' not in afexConfig['filesystem']) or (not isinstance(afexConfig['filesystem']['asset_directories'], list)):
+            PrintError(f"The engine config for {target} {config} did not contain a list of asset_directories under filesystem")
+            return
+        
+        assetDirectories = afexConfig['filesystem']['asset_directories']
+        for assetDir in assetDirectories:
+            ResolveAndCopyAssetDirectory(os.path.join(destinationPackage, "Assets"), assetDir, target, config)
+        
+    # Update the engine config pointing assets only locally to the package
+    afexConfig['filesystem']['asset_directories'] = ["{{app}}/Assets"]
+    with open(engineConfigPath, 'wb') as file:
+        tomli_w.dump(afexConfig, file)
+
 
 def PackageTargetAndConfig(target:str, config:str):
     global gPackagesCreated
+
+    targetProject:ProjectBase=None
+    for project in GetAllProjects():
+        if project.name == target:
+            targetProject = project
+            break
+
     cmakeDir = GetCMakeTempDir(config)
     targetDir = os.path.join(cmakeDir, target)
     # The following root contains all packaged output including debug and log information.
@@ -138,7 +207,13 @@ def PackageTargetAndConfig(target:str, config:str):
         # where the executable is being placed.
         shutil.copy2(targetPdb, destinationRoot)
 
+
+    CopyAFEXConfigFiles(targetProject, destinationPackage)
+
+    CopyAssets(destinationPackage, target, config)
+
     CopyTargetDllsRecursively(target, config, peFile=targetExe, destinationDir=destinationPackage)
+
     gPackagesCreated.append({'config':config,'target':target})
 
 def FindPackageResultFromConfigAndTarget(config, target):

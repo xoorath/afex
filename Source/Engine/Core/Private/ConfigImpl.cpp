@@ -2,8 +2,9 @@
 
 // Engine
 #include <Core/Assert.h>
+#include <Core/Config/Config.h>
 #include <Core/Logging.h>
-#include <Core/Paths.h>
+#include <Core/Filesystem/Paths.h>
 #include <Core/Text.h>
 
 // System
@@ -13,6 +14,11 @@
 //////////////////////////////////////////////////////////////////////////
 namespace Core
 {
+
+    ////////////////////////////////////////////////////////////////////////// Private
+    /*static*/ std::map<std::string, std::shared_ptr<Config>> ConfigImpl::s_ConfigCache;
+    /*static*/ std::mutex ConfigImpl::s_FactoryMutex;
+
     ////////////////////////////////////////////////////////////////////////// Internal
     std::string timePointToString(const std::chrono::system_clock::time_point& timePoint) {
         // Convert time_point to string (for example, as ISO8601 format)
@@ -24,6 +30,44 @@ namespace Core
     }
 
     ////////////////////////////////////////////////////////////////////////// Public
+
+    /*static*/ std::shared_ptr<Config> ConfigImpl::ConfigFactory(std::string_view collectionName)
+    {
+        std::string collectionNameStr(collectionName);
+        std::lock_guard<std::mutex> lock(s_FactoryMutex);
+        std::map<std::string, std::shared_ptr<Config>>::iterator found = s_ConfigCache.find(collectionNameStr);
+        if(found != s_ConfigCache.end())
+        {
+            return found->second;
+        }
+        auto conf = std::make_shared<Config>(collectionName); 
+        s_ConfigCache[collectionNameStr] = conf;
+        return conf;
+    }
+
+    /*static*/ std::shared_ptr<Config> ConfigImpl::ConfigFactory(const std::filesystem::path& collectionPath)
+    {
+        std::string collectionName = collectionPath.filename().replace_extension().string();
+        std::lock_guard<std::mutex> lock(s_FactoryMutex);
+        std::map<std::string, std::shared_ptr<Config>>::iterator found = s_ConfigCache.find(collectionName);
+        if (found != s_ConfigCache.end())
+        {
+            return found->second;
+        }
+        auto conf = std::make_shared<Config>(collectionPath);
+        s_ConfigCache[collectionName] = conf;
+        return conf;
+    }
+
+    /*static*/ void ConfigImpl::ReleaseCachedConfig(std::string_view collectionName)
+    {
+        std::lock_guard<std::mutex> lock(s_FactoryMutex);
+        auto found = s_ConfigCache.find(std::string(collectionName));
+        if (found != s_ConfigCache.end())
+        {
+            s_ConfigCache.erase(found);
+        }
+    }
 
     /*explicit*/ ConfigImpl::ConfigImpl(std::string_view collectionName)
         : m_CollectionName(collectionName)

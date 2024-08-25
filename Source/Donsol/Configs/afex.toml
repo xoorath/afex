@@ -1,0 +1,7 @@
+[filesystem]
+asset_directories = [ '{{app}}/Assets', '{{app}}/../../../../Assets/Common', '{{app}}/../../../../Assets/Donsol' ]
+
+[window]
+height = 1080
+title = 'afex'
+width = 1920

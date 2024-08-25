@@ -37,6 +37,22 @@ function(declare_game_project engine_library_dependencies)
             set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_ENVIRONMENT "${NATVIS_FILES}")
             target_sources(${PROJECT_NAME} PRIVATE ${NATVIS_FILES})
         endif()
+
+        #### Setup the default debugging arguments
+        # This provides hardcoded paths to any of the config files in Configs/ to be loaded
+        # automatically when debugging in visual studio. 
+        file(GLOB_RECURSE AFEX_CONFIG_FILES "${CMAKE_CURRENT_SOURCE_DIR}/Configs/*.toml")
+        # Initialize an empty string for command line arguments
+        set(DEBUG_COMMAND_LINE_ARGS "")
+
+        foreach(config_file ${AFEX_CONFIG_FILES})
+            set(DEBUG_COMMAND_LINE_ARGS "${DEBUG_COMMAND_LINE_ARGS} --config \"${config_file}\"")
+        endforeach()
+
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            VS_DEBUGGER_COMMAND_ARGUMENTS "${DEBUG_COMMAND_LINE_ARGS}"
+        )
+
     endif()
 
     copy_third_party_dlls()

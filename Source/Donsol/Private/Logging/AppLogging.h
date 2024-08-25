@@ -1,8 +1,0 @@
-#pragma once
-
-//////////////////////////////////////////////////////////////////////////
-namespace Donsol
-{
-    void ConfigureLogging();
-    void ShutdownLogging();
-}

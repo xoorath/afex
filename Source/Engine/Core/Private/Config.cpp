@@ -11,6 +11,21 @@
 namespace Core
 {
     ////////////////////////////////////////////////////////////////////////// Public
+    /*CORE_EXPORT static*/ std::shared_ptr<Config> Config::ConfigFactory(std::string_view collectionName)
+    {
+        return ConfigImpl::ConfigFactory(collectionName);
+    }
+
+    /*CORE_EXPORT static*/ std::shared_ptr<Config> Config::ConfigFactory(const std::filesystem::path& collectionPath)
+    {
+        return ConfigImpl::ConfigFactory(collectionPath);
+    }
+
+    /*CORE_EXPORT static*/ void Config::ReleaseCachedConfig(std::string_view collectionName)
+    {
+        ConfigImpl::ReleaseCachedConfig(collectionName);
+    }
+
     /*CORE_EXPORT explicit*/ Config::Config(std::string_view collectionName)
         : m_PIMPL(collectionName)
     {

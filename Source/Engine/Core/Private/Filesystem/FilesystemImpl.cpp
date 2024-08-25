@@ -1,16 +1,15 @@
-#include <Core/Filesystem.h>
+#include "FilesystemImpl.h"
 
 // Engine
 #include <Core/Assert.h>
 #include <Core/Config/Config.h>
+#include <Core/Filesystem/ResolvePathResult.h>
 #include <Core/Logging.h>
 #include <Core/Text.h>
-#include <Core/Paths.h>
+#include <Core/Filesystem/Paths.h>
 
 // System
 #include <regex>
-#include <string_view>
-#include <map>
 
 using namespace std::string_view_literals;
 using namespace Core::Text;
@@ -64,14 +63,14 @@ namespace Core
         }
 
         ResolvePathSegmentResult TryReplacePathSegmentWithVariables(
-            const Filesystem::VarMap& varMap,
+            const FilesystemImpl::VarMap& varMap,
             std::string_view fullPath,
             std::string_view strIn,
             fs::path& pathOut,
             bool isFirstSegment)
         {
             ////////////////////////////////////////////////////////////////////////// Check for whitespace issues
-            if(strIn != TrimRight(strIn))
+            if (strIn != TrimRight(strIn))
             {
                 AFEX_LOG_ERROR("A path segment was found with whitespace at the end of the segment.\n"
                     "Leading whitespace is legal but not very well supported in applications. It is probably a mistake.\n"
@@ -81,7 +80,7 @@ namespace Core
                 return ResolvePathSegmentResult::ErrorWhitespacePlacement;
             }
 #if AFEX_LOG_WARNING_ENABLED
-            else if(strIn != TrimLeft(strIn))
+            else if (strIn != TrimLeft(strIn))
             {
                 AFEX_LOG_WARNING("A path segment was found with whitespace at the beginning of the segment.\n"
                     "Leading whitespace is legal but not very well supported in applications. It is probably a mistake.\n"
@@ -92,10 +91,10 @@ namespace Core
 #endif
 
             ////////////////////////////////////////////////////////////////////////// Check for AFEX variables (except s_Assets)
-            Filesystem::VarMap::const_iterator foundVar = varMap.find(strIn);
-            if(foundVar != varMap.end())
+            FilesystemImpl::VarMap::const_iterator foundVar = varMap.find(strIn);
+            if (foundVar != varMap.end())
             {
-                if(isFirstSegment)
+                if (isFirstSegment)
                 {
                     pathOut = foundVar->second;
                     return ResolvePathSegmentResult::Success;
@@ -112,15 +111,15 @@ namespace Core
             ////////////////////////////////////////////////////////////////////////// Check for AFEX variables used improperly
             // Check for known variable names concatenated to string parts. 
             // That is not allowed.
-            for(auto const& kvp : varMap)
+            for (auto const& kvp : varMap)
             {
-                if(ContainsCaseInsensitive(strIn, kvp.first))
+                if (ContainsCaseInsensitive(strIn, kvp.first))
                 {
                     AFEX_LOG_ERROR("Invalid path segment. AFEX filesystem variables can only be used at the beginning of a path "
                         "and are only valid when not concatenated with other text.\n"
                         "For example: {}_foo/bar is invalid."
                         "Path segment = \"{}\"\n"
-                        "Path = \"{}\"", Filesystem::s_App, strIn, fullPath);
+                        "Path = \"{}\"", FilesystemImpl::s_App, strIn, fullPath);
                     return ResolvePathSegmentResult::ErrorVariableConcatenated;
                 }
             }
@@ -135,33 +134,33 @@ namespace Core
     }
 
     ////////////////////////////////////////////////////////////////////////// Public
-    /*static*/ const std::string_view Filesystem::s_App = "{{app}}"sv;
-    /*static*/ const std::string_view Filesystem::s_Assets = "{{assets}}"sv;
-    /*static*/ const std::string_view Filesystem::s_Cwd = "{{cwd}}"sv;
-    /*static*/ const std::string_view Filesystem::s_Local = "{{local}}"sv;
-    /*static*/ const std::string_view Filesystem::s_Roaming = "{{roaming}}"sv;
-    /*static*/ const std::string_view Filesystem::s_Temp = "{{temp}}"sv;
+    /*static*/ const std::string_view FilesystemImpl::s_App = "{{app}}"sv;
+    /*static*/ const std::string_view FilesystemImpl::s_Assets = "{{assets}}"sv;
+    /*static*/ const std::string_view FilesystemImpl::s_Cwd = "{{cwd}}"sv;
+    /*static*/ const std::string_view FilesystemImpl::s_Local = "{{local}}"sv;
+    /*static*/ const std::string_view FilesystemImpl::s_Roaming = "{{roaming}}"sv;
+    /*static*/ const std::string_view FilesystemImpl::s_Temp = "{{temp}}"sv;
 
-    /*explicit CORE_EXPORT*/ Filesystem::Filesystem(Core::Config& filesystemConfig)
+    /*explicit*/ FilesystemImpl::FilesystemImpl(Core::Config& filesystemConfig)
     {
         using namespace std::string_view_literals;
 
         m_VariableMap =
         {
-            { Filesystem::s_App,        Core::Paths::ApplicationDirectory() },
-            { Filesystem::s_Cwd,        Core::Paths::CurrentWorkingDirectory() },
+            { FilesystemImpl::s_App,        Core::Paths::ApplicationDirectory() },
+            { FilesystemImpl::s_Cwd,        Core::Paths::CurrentWorkingDirectory() },
             { "."sv,                    Core::Paths::CurrentWorkingDirectory() },
-            { Filesystem::s_Local,      Core::Paths::LocalDirectory() },
-            { Filesystem::s_Roaming,    Core::Paths::RoamingDirectory() },
-            { Filesystem::s_Temp,       Core::Paths::TempDirectory() }
+            { FilesystemImpl::s_Local,      Core::Paths::LocalDirectory() },
+            { FilesystemImpl::s_Roaming,    Core::Paths::RoamingDirectory() },
+            { FilesystemImpl::s_Temp,       Core::Paths::TempDirectory() }
         };
 
-        const std::vector<std::string> defaultAssetDirectories = 
-            {
-                std::string("{{app}}/Assets")
-            };
+        const std::vector<std::string> defaultAssetDirectories =
+        {
+            std::string("{{app}}/Assets")
+        };
 
-        std::vector<std::string> assetDirectories = 
+        std::vector<std::string> assetDirectories =
             filesystemConfig.GetSetting<std::vector<std::string>>("filesystem.asset_directories"sv, defaultAssetDirectories);
 
         AFEX_FATAL_CHECK_MSG(!assetDirectories.empty(), "AFEX was configured with 0 asset directories. This is probably a mistake"
@@ -169,15 +168,15 @@ namespace Core
 
         m_AssetDirectories.reserve(assetDirectories.size());
 
-        for(std::string& str : assetDirectories)
+        for (std::string& str : assetDirectories)
         {
-            if(str.empty())
+            if (str.empty())
             {
                 AFEX_LOG_WARNING("An empty asset path was provided during filesystem startup.");
                 continue;
             }
 
-            if(ContainsCaseInsensitive(str, s_Assets))
+            if (ContainsCaseInsensitive(str, s_Assets))
             {
                 AFEX_LOG_ERROR("An asset path can't contain {}.\nPath = \"{}\"", s_Assets, str);
                 continue;
@@ -187,7 +186,7 @@ namespace Core
             fs::path assetDirPathTransformed; // the path after substitutions
 
             bool isFirstPathPart = true;
-            for(const fs::path pathPart : assetDirPath)
+            for (const fs::path pathPart : assetDirPath)
             {
                 fs::path transformedPathPart;
                 auto result = TryReplacePathSegmentWithVariables(
@@ -198,7 +197,7 @@ namespace Core
                     /*isFirstSegment=*/ isFirstPathPart
                 );
                 isFirstPathPart = false;
-                if(result == ResolvePathSegmentResult::Success)
+                if (result == ResolvePathSegmentResult::Success)
                 {
                     assetDirPathTransformed = assetDirPathTransformed / transformedPathPart;
                 }
@@ -216,7 +215,7 @@ namespace Core
             assetDirPathTransformed = fs::absolute(assetDirPathTransformed);
 
 #if AFEX_LOG_WARNING_ENABLED
-            if(!fs::exists(assetDirPathTransformed))
+            if (!fs::exists(assetDirPathTransformed))
             {
                 AFEX_LOG_WARNING("An asset path that was provided during filesystem startup could not be found.\n"
                     "The path will be used regardless in case it is created later, but it may indicate an error.\n"
@@ -230,17 +229,17 @@ namespace Core
             assetDirectories.size());
 
 #if AFEX_LOG_WARNING_ENABLED
-        if(m_AssetDirectories.size() != assetDirectories.size())
+        if (m_AssetDirectories.size() != assetDirectories.size())
         {
             AFEX_LOG_WARNING("AFEX was configured with {} asset directories but only {} will be used.\n"
-            "See earlier log messages to understand why.", assetDirectories.size(), m_AssetDirectories.size());
+                "See earlier log messages to understand why.", assetDirectories.size(), m_AssetDirectories.size());
         }
 #endif
 
         bool anyExist = false;
-        for(auto const& assetPath : m_AssetDirectories)
+        for (auto const& assetPath : m_AssetDirectories)
         {
-            if(fs::exists(assetPath))
+            if (fs::exists(assetPath))
             {
                 AFEX_LOG_TRACE("AFEX Filesystem asset directory (found): {}", assetPath.string());
                 anyExist = true;
@@ -254,63 +253,16 @@ namespace Core
         AFEX_FATAL_CHECK_MSG(anyExist, "AFEX was configured with {} asset directories. None of these directories were found.",
             defaultAssetDirectories.size());
     }
-    /*CORE_EXPORT*/ Filesystem::Filesystem(const Filesystem&) = default;
-    /*CORE_EXPORT*/ Filesystem::Filesystem(Filesystem&&) noexcept = default;
-    /*CORE_EXPORT*/ Filesystem& Filesystem::operator=(const Filesystem&) = default;
-    /*CORE_EXPORT*/ Filesystem& Filesystem::operator=(Filesystem&&) noexcept = default;
-    /*CORE_EXPORT*/ Filesystem::~Filesystem() = default;
+    FilesystemImpl::FilesystemImpl(const FilesystemImpl&) = default;
+    FilesystemImpl::FilesystemImpl(FilesystemImpl&&) noexcept = default;
+    FilesystemImpl& FilesystemImpl::operator=(const FilesystemImpl&) = default;
+    FilesystemImpl& FilesystemImpl::operator=(FilesystemImpl&&) noexcept = default;
+    FilesystemImpl::~FilesystemImpl() = default;
 
-    /*CORE_EXPORT static*/ bool Filesystem::ResolvePathResultIsError(Filesystem::ResolvePathResult result)
-    {
-        switch(result)
-        {
-        default:
-            AFEX_ASSERT_FAIL("Unhandled resolve path result");
-        case ResolvePathResult::ErrorEmpty:
-        case ResolvePathResult::ErrorInvalid:
-        case ResolvePathResult::ErrorMupltipleVariables:
-        case ResolvePathResult::ErrorVariablePlacement:
-        case ResolvePathResult::ErrorVariableConcatenated:
-            return true;
-        case ResolvePathResult::Resolved:
-        case ResolvePathResult::ResolvedFound:
-        case ResolvePathResult::ResolvedNotFound:
-            return false;
-        }
-    }
-
-    /*CORE_EXPORT static*/ const std::string_view Filesystem::ResolvePathResultToString(Filesystem::ResolvePathResult result)
-    {
-        using namespace std::string_view_literals;
-        switch(result)
-        {
-        case ResolvePathResult::ErrorEmpty:
-            return "error: path is empty"sv;
-        case ResolvePathResult::ErrorInvalid:
-            return "error: path is invalid"sv;
-        case ResolvePathResult::ErrorMupltipleVariables:
-            return "error: multiple variables in path"sv;
-        case ResolvePathResult::ErrorVariablePlacement:
-            return "error: placement of variables in path is invalid"sv;
-        case ResolvePathResult::ErrorVariableConcatenated:
-            return "error: variable in path is joined to more text"sv;
-        case ResolvePathResult::Resolved:
-            return "path valid"sv;
-        case ResolvePathResult::ResolvedFound:
-            return "path valid and found"sv;
-        case ResolvePathResult::ResolvedNotFound:
-            return "path valid and not found"sv;
-        default:
-            AFEX_ASSERT_FAIL("Unhandled resolve path result");
-            return "UNHANDLED"sv;
-
-        }
-    }
-
-    /*CORE_EXPORT*/ Filesystem::ResolvePathResult Filesystem::ResolvePath(const fs::path& pathIn, fs::path& outPath) const
+    ResolvePathResult FilesystemImpl::ResolvePath(const fs::path& pathIn, fs::path& outPath) const
     {
         outPath.clear();
-        if(pathIn.empty())
+        if (pathIn.empty())
         {
             return ResolvePathResult::ResolvedNotFound;
         }
@@ -329,7 +281,7 @@ namespace Core
 
             // get all path parts after the asset directory
             fs::path endOfPath;
-            for(fs::path::const_iterator pathIt = std::next(pathIn.begin()); pathIt != pathIn.end(); ++pathIt)
+            for (fs::path::const_iterator pathIt = std::next(pathIn.begin()); pathIt != pathIn.end(); ++pathIt)
             {
                 fs::path transformedPathPart;
                 auto result = TryReplacePathSegmentWithVariables(
@@ -355,14 +307,14 @@ namespace Core
             // Go through the asset directories in reverse order to see if the requested path exists
             // If it does: return that path.
             // Otherwise: Resolve the path with the lowest ordered asset directory.
-            for(auto it = m_AssetDirectories.crbegin(); it != m_AssetDirectories.crend(); it = std::next(it))
+            for (auto it = m_AssetDirectories.crbegin(); it != m_AssetDirectories.crend(); it = std::next(it))
             {
                 const fs::path& assetDirectory = *it;
                 fs::path potentialResultPath = assetDirectory / endOfPath;
 
                 potentialResultPath = fs::absolute(potentialResultPath);
 
-                if(fs::exists(potentialResultPath))
+                if (fs::exists(potentialResultPath))
                 {
                     outPath = potentialResultPath;
                     return ResolvePathResult::ResolvedFound;
@@ -374,7 +326,7 @@ namespace Core
         }
 
         bool isFirstPathPart = true;
-        for(const fs::path pathPart : pathIn)
+        for (const fs::path pathPart : pathIn)
         {
             fs::path transformedPathPart;
             auto result = TryReplacePathSegmentWithVariables(
@@ -385,7 +337,7 @@ namespace Core
                 /*isFirstSegment=*/ isFirstPathPart
             );
             isFirstPathPart = false;
-            switch(result)
+            switch (result)
             {
             case ResolvePathSegmentResult::ErrorWhitespacePlacement:
                 return ResolvePathResult::ErrorInvalid;

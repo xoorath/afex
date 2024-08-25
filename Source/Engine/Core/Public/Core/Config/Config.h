@@ -8,6 +8,7 @@
 // System
 #include <filesystem>
 #include <functional>
+#include <memory>
 #include <optional>
 
 //////////////////////////////////////////////////////////////////////////
@@ -31,6 +32,27 @@ namespace Core
     class Config
     {
     public:
+
+        // The collection name uniquely identifies this collection of 
+        // configuration values. 
+        //
+        // On desktop platforms this refers to a filename next to the executable.
+        // Game code should not be assumed that collections have any specific
+        // backings such as toml, etc.
+        CORE_EXPORT static std::shared_ptr<Config> ConfigFactory(std::string_view collectionName);
+
+        // Creates or replaces new global configuration from a config file.
+        // This is intended for development use: providing a specific config
+        // from the command line or some known location. To release this config
+        // later: remove all references to the returned shared_ptr and call 
+        // ReleaseCachedConfig with the config collection name.
+        CORE_EXPORT static std::shared_ptr<Config> ConfigFactory(const std::filesystem::path& collectionPath);
+
+        // Releases a cached config with the specified name if it exists.
+        // This does not necessarily free that config if other references to the
+        // shared memory exist.
+        CORE_EXPORT static void ReleaseCachedConfig(std::string_view collectionName);
+
         // The collection name uniquely identifies this collection of 
         // configuration values. 
         //

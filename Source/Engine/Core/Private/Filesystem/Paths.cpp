@@ -1,6 +1,6 @@
 // Core
 #include <Core/Assert.h>
-#include <Core/Paths.h>
+#include <Core/Filesystem/Paths.h>
 #include <Core/Text.h>
 
 // System
@@ -19,12 +19,6 @@
 #endif
 
 namespace fs = std::filesystem;
-
-//////////////////////////////////////////////////////////////////////////
-namespace
-{
-
-}
 
 //////////////////////////////////////////////////////////////////////////
 namespace Core::Paths

@@ -6,7 +6,9 @@
 // System
 #include <cstdint>
 #include <filesystem>
+#include <mutex>
 #include <string_view>
+#include <unordered_map>
 
 // External
 #include <toml.hpp>
@@ -14,10 +16,17 @@
 //////////////////////////////////////////////////////////////////////////
 namespace Core
 {
+    class Config;
+
     //////////////////////////////////////////////////////////////////////////
     class ConfigImpl
     {
     public:
+        static std::shared_ptr<Config> ConfigFactory(std::string_view collectionName);
+
+        static std::shared_ptr<Config> ConfigFactory(const std::filesystem::path& collectionPath);
+
+        static void ReleaseCachedConfig(std::string_view collectionName);
 
         // The collection name will ultimately become a file name in reality,
         // however the application should not make assumptions about the
@@ -54,6 +63,9 @@ namespace Core
         // a variable like "alpha.a" requires the alpha table and a variable "b" needs the root table
         // This function gets the appropriate table for a given name.
         toml::table* FindTable(std::string_view varName, bool createMissingPaths);
+
+        static std::map<std::string, std::shared_ptr<Config>> s_ConfigCache;
+        static std::mutex s_FactoryMutex;
 
         std::string m_CollectionName;
         std::filesystem::path m_FilePath;

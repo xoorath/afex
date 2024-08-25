@@ -4,7 +4,8 @@
 #include <Core/Assert.h>
 #include <Core/CommonMacros.h>
 #include <Core/Logging.h>
-#include <Core/Paths.h>
+#include <Core/Filesystem/Paths.h>
+#include <Core/Text.h>
 #include <Platform/HMI/Cursor.h>
 #include <Platform/HMI/Keyboard.h>
 #include <Platform/HMI/ImguiInputProvider.h>
@@ -14,21 +15,53 @@
 
 // External
 #include <imgui.h>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/msvc_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
+// System
+#include <ctime>
+#include <mutex>
+
+using namespace std::string_view_literals;
 
 //////////////////////////////////////////////////////////////////////////
 namespace Application
 {
+    ////////////////////////////////////////////////////////////////////////// Internal
+    namespace
+    {
+        static spdlog::sink_ptr CreateSink_MSVC()
+        {
+            const bool checkDebuggerPresent = true;
+            spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::msvc_sink<std::mutex>>(checkDebuggerPresent);
+            sink->set_level(spdlog::level::trace);
+            return sink;
+        }
+
+        static spdlog::sink_ptr CreateSink_Stdout()
+        {
+            spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            sink->set_level(spdlog::level::info);
+            return sink;
+        }
+
+        static spdlog::sink_ptr CreateSink_File()
+        {
+            const spdlog::filename_t destination = SPDLOG_FILENAME_T("logs/afex.log");
+            spdlog::sink_ptr sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(destination, /*truncate=*/true);
+            sink->set_level(spdlog::level::trace);
+            return sink;
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////// Public
     ApplicationImpl::ApplicationImpl() = default;
 
     ApplicationImpl::~ApplicationImpl()
     {
-        AFEX_LOG_TRACE(__FUNCTION__ "()");
-        for (auto it = m_ShutdownProcedure.rbegin(); it != m_ShutdownProcedure.rend(); ++it)
-        {
-            AFEX_LOG_TRACE("Shutdown procedure: {}", (std::get<std::string>(*it)));
-            (std::get<std::function<void()>>(*it))();
-        }
+        AFEX_ASSERT_MSG(m_ShutdownProcedure.size() == 0, "The application is meant to shutdown before being destroyed.");
     }
     
     bool ApplicationImpl::EarlyInit(int argc, const char* argv[])
@@ -44,9 +77,40 @@ namespace Application
             return false;
         }
 
-        // todo: get this configuration path from the command line if it's provided.
-        // when not on desktop platforms just use "afex" rather than a path.
-        m_Config.emplace(Core::Paths::ApplicationDirectory() / "afex.toml");
+        for(int i = 1; i < argc; ++i)
+        {
+            std::string_view arg = argv[i];
+
+            if(Core::Text::StrCmp<Core::Text::OrderingRules::CaseInsensitive>(arg, "--config") == 0)
+            {
+                if(i == argc-1)
+                {
+                    break;
+                }
+                std::string_view value = argv[++i];
+                std::filesystem::path configFilePath = value;
+                if(std::filesystem::exists(configFilePath))
+                {
+                    Core::Config::ConfigFactory(configFilePath);
+                    AddShutdownProcedure("release cached config"sv, 
+                        [configFilePath]() 
+                        {
+                            std::string configName = configFilePath.filename().replace_extension().string();
+                            Core::Config::ReleaseCachedConfig(configName);
+                        });
+                }
+                else
+                {
+                    AFEX_LOG_ERROR("A config path was passed on the command line but it can't be found.\npath = ", configFilePath.string());
+                }
+            }
+        }
+
+        m_Config = Core::Config::ConfigFactory("afex"sv);
+        if(m_Config.get() != nullptr)
+        {
+            AddShutdownProcedure("release engine config"sv, [this]() { m_Config.reset(); });
+        }
         
         return true;
     }
@@ -57,7 +121,7 @@ namespace Application
         ////////////////////////////////////////////////////////////////////////// Global Init
         if (Platform::Window::GlobalInit())
         {
-            AddShutdownProcedure("Window Global", &Platform::Window::GlobalShutdown);
+            AddShutdownProcedure("Window Global"sv, &Platform::Window::GlobalShutdown);
         }
         else
         {
@@ -65,15 +129,7 @@ namespace Application
         }
 
         ////////////////////////////////////////////////////////////////////////// Filesystem
-        m_Filesystem.emplace(m_Config.value());
-        using namespace std::filesystem;
-        path testPath;
-        auto result = m_Filesystem->ResolvePath(path("{{assets}}") / "foo" / "bar", testPath);
-        result = m_Filesystem->ResolvePath(path("{{assets}}") / "foo" / "bar.txt", testPath);
-        result = m_Filesystem->ResolvePath(path("{{assets}}") / "foo" / "bar.txt", testPath);
-
-
-        (void)result;
+        m_Filesystem.emplace(*m_Config.get());
 
         ////////////////////////////////////////////////////////////////////////// ImGui Context
         m_ImguiContext = ImGui::CreateContext();
@@ -90,9 +146,9 @@ namespace Application
         }
 
         ////////////////////////////////////////////////////////////////////////// Window
-        const uint32_t width =      m_Config.value().GetSetting<uint32_t>("window.width", 1920);
-        const uint32_t height =     m_Config.value().GetSetting<uint32_t>("window.height", 1080);
-        const std::string title =   m_Config.value().GetSetting<std::string>("window.title", "afex");
+        const uint32_t width =      m_Config->GetSetting<uint32_t>("window.width", 1920);
+        const uint32_t height =     m_Config->GetSetting<uint32_t>("window.height", 1080);
+        const std::string title =   m_Config->GetSetting<std::string>("window.title", "afex");
         m_Config->Save();
 
         const Platform::WindowArgs windowArgs(title, m_ImguiContext, width, height);
@@ -204,6 +260,17 @@ namespace Application
         m_ShutdownProcedure.push_back(std::make_tuple(std::string(debugName), procedure));
     }
 
+    void ApplicationImpl::RunShutdownProcedure()
+    {
+        AFEX_LOG_TRACE(__FUNCTION__ "()");
+        for (auto it = m_ShutdownProcedure.rbegin(); it != m_ShutdownProcedure.rend(); ++it)
+        {
+            AFEX_LOG_TRACE("Shutdown procedure: {}", (std::get<std::string>(*it)));
+            (std::get<std::function<void()>>(*it))();
+        }
+        m_ShutdownProcedure.clear();
+    }
+
     void ApplicationImpl::GetRenderResolution(uint32_t& outWidth, uint32_t& outHeight) const
     {
         if(m_RenderResolutionWidth.has_value() || m_RenderResolutionHeight.has_value())
@@ -270,5 +337,45 @@ namespace Application
         m_ImguiRenderer->Resize(windowWidth, windowHeight);
 
         m_ImguiInputProvider->SetInputScale(1.0f, 1.0f);
+    }
+
+    void ApplicationImpl::ConfigureLogging()
+    {
+        using namespace std::chrono_literals;
+
+        Core::g_Logger = std::make_shared<spdlog::logger>
+            (
+                std::string("AppLogger"),
+                spdlog::sinks_init_list
+                ({
+                    CreateSink_MSVC(),
+                    CreateSink_Stdout(),
+                    CreateSink_File()
+                })
+            );
+        Core::g_Logger->set_pattern("[%H:%M:%S.%e] [%t] [%L] %s(%#):  %v");
+        Core::g_Logger->set_level(spdlog::level::trace);
+        spdlog::register_logger(Core::g_Logger);
+
+        std::time_t now;
+        std::time(&now);
+        char date_buf[64] = { 0 };
+        std::strftime(date_buf, sizeof(date_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+
+        AFEX_LOG_INFO("({}) Logging has been configured."
+            "============================================================", date_buf);
+
+        AddShutdownProcedure("Logging", []()
+        {
+            std::time_t now;
+            std::time(&now);
+            char date_buf[64] = { 0 };
+            std::strftime(date_buf, sizeof(date_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+
+            AFEX_LOG_INFO("({}) App is shutting down."
+                "============================================================", date_buf);
+            spdlog::shutdown();
+            Core::g_Logger.reset();
+        });
     }
 }
