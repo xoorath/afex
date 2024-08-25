@@ -1,12 +1,10 @@
 [Home](./README.md) > Todo
 
 # Engine functionality
-* **(Priority high)** Add imgui input handling
+* **(Priority high)** Support linux builds
 
 # Engine Architecture 
-    * Currently hangs on close because of the busted semaphore architecture (for some reason only when no debugger is attached)
 * **(Priority mid)** Introduce dependency injection
-* **(Priority mid)** Decouple Graphics and Platform
 * **(Priority low)** Continue update and render while resizing. Look into glfwSetFramebufferSizeCallback for handling resize callbacks and re-architect the update loop so it can respond during that callback.
 
 # Build System

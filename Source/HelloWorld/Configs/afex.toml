@@ -1,0 +1,7 @@
+[filesystem]
+asset_directories = [ '{{app}}/Assets', '{{app}}/../../../../Assets/Common' ]
+
+[window]
+height = 1080
+title = 'hello world'
+width = 1920

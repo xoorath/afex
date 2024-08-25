@@ -120,9 +120,10 @@ def ResolveAndCopyAssetDirectory(destinationAssetsDir:str, configuredAssetsDir:s
     targetDir = os.path.join(cmakeDir, target)
     appPath = os.path.join(targetDir, config)
 
-    # todo: perform these replacements case insensitively
-    # todo: replace any leading "./" as well, treating it like cwd
-    if configuredAssetsDir.find("{{app}}") != -1:
+    # todo: handle app/cwd replacements case insensitively
+    if configuredAssetsDir.find("./") == 0 or configuredAssetsDir.find(".\\") == 0:
+        configuredAssetsDir = appPath + configuredAssetsDir[1:]
+    elif configuredAssetsDir.find("{{app}}") != -1:
         configuredAssetsDir = configuredAssetsDir.replace("{{app}}", appPath)
     elif configuredAssetsDir.find("{{cwd}}") != -1:
         configuredAssetsDir = configuredAssetsDir.replace("{{cwd}}", appPath)
@@ -130,7 +131,6 @@ def ResolveAndCopyAssetDirectory(destinationAssetsDir:str, configuredAssetsDir:s
     if os.path.exists(configuredAssetsDir) and os.path.isdir(configuredAssetsDir):
         shutil.copytree(configuredAssetsDir, destinationAssetsDir, dirs_exist_ok=True)
 
-# todo: handle toml parse errors
 def CopyAssets(destinationPackage:str, target:str, config:str):
     # this assumes we successfully copied the engine config from a Configs directory already
     engineConfigPath = os.path.join(destinationPackage, "afex.toml")
