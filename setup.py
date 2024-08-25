@@ -235,15 +235,17 @@ def TryMakeFileLink(src : str, dst : str):
                 raise Exception(f"Tried to create a link, but the destination exists and is not a link. path: {dst}")
         os.symlink(src, dst, target_is_directory=False)
 
+def SetupSolutionLink(solutionSrc : str, shortcutDest: str):
+    PrintContext(f"re-creating shortcut {shortcutDest}")
+    TryMakeFileLink(solutionSrc, shortcutDest)
+    if not os.path.exists(shortcutDest) or not os.path.islink(shortcutDest):
+        PrintError(f"Failed to create shortcut {shortcutDest}")
+
 def SetupLinks(buildType : str):
-    # Todo: setup links for each game in ALL_PROJECTS
-    afexSlnSource = os.path.join(GetCMakeTempDir(buildType), f"source.sln")
-    destName = f"source_{buildType.lower()}.sln"
-    afexSlnDest = os.path.join(SCRIPT_DIR, destName)
-    PrintContext(f"re-creating shortcut to {destName}")
-    TryMakeFileLink(afexSlnSource, afexSlnDest)
-    if not os.path.exists(afexSlnDest) or not os.path.islink(afexSlnDest):
-        PrintError(f"Failed to create shortcut to {destName}")
+    SetupSolutionLink(os.path.join(GetCMakeTempDir(buildType), f"source.sln"), os.path.join(SCRIPT_DIR, f"all_{buildType.lower()}.sln"))
+    for project in ALL_PROJECTS:
+        if isinstance(project, GameProject):
+            SetupSolutionLink(os.path.join(GetCMakeTempDir(buildType), project.name, f"{project.name}.sln"), os.path.join(SCRIPT_DIR, f"{project.name}_{buildType.lower()}.sln"))
 
 # At the time of writing conan 2 does not handle multi-configuration generators properly
 # This means we need to split out debug and release configs for the time being.

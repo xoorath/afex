@@ -4,6 +4,7 @@
 #include <Core/Assert.h>
 #include <Core/Logging.h>
 #include <Core/Paths.h>
+#include <Core/Text.h>
 
 // System
 #include <filesystem>
@@ -28,10 +29,38 @@ namespace Core
         : m_CollectionName(collectionName)
     {
         const std::string invalidChars = "<>:\"/\\|?*";
-        AFEX_ASSERT_MSG(m_FileName.find_first_of(invalidChars) == std::string::npos,
-            "Config collection name is invalid: {}", m_FileName);
+        AFEX_ASSERT_MSG(m_CollectionName.find_first_of(invalidChars) == std::string::npos,
+            "Config collection name is invalid: {}", m_CollectionName);
 
-        m_FileName = (Paths::ExecutableDirectory() / (std::string(collectionName) + ".toml")).string();
+        namespace fs = std::filesystem;
+
+        // We can't use the Core::Filesystem module here as the filesystem requires
+        // this config module to be setup.
+        // One option for the future is: we could potentially take an optional filesystem
+        // reference and use it if it exists
+        m_FilePath = Core::Paths::ApplicationDirectory() / (std::string(collectionName) + ".toml");
+
+        Load();
+    }
+
+    ConfigImpl::ConfigImpl(const std::filesystem::path& collectionPath)
+    {
+        AFEX_ASSERT_MSG(!collectionPath.empty(), "A config was specified an empty path\npath = {}", collectionPath.string());
+        AFEX_ASSERT_MSG(collectionPath.has_filename(), "A config was specified with no filename\npath = {}", collectionPath.string());
+        
+        using namespace Core::Text;
+
+#if AFEX_LOG_WARNING_ENABLED
+        if(!collectionPath.has_extension() 
+            || StrCmp<OrderingRules::CaseInsensitive>(collectionPath.extension().string(), ".toml") != 0)
+        {
+            AFEX_LOG_WARNING("A config file was specified without the toml extension\npath = {}", collectionPath.string());
+        }
+#endif
+
+        m_CollectionName = collectionPath.filename().replace_extension().string();
+        m_FilePath = collectionPath;
+
         Load();
     }
 
@@ -39,32 +68,29 @@ namespace Core
     {
         try
         {
-            m_ConfigTable = toml::parse_file(m_FileName);
+            m_ConfigTable = toml::parse_file(m_FilePath.string());
         }
         catch (const toml::v3::ex::parse_error& ex)
         {
-            // Logging may not be ready as the logging depends on some configuration values.
-            // It would be paranoid to check for no logger in many cases, but not here.
-            if(::Core::g_Logger != nullptr)
-            {
-                AFEX_LOG_ERROR("{}: {}", ex.description(), m_FileName);
-            }
+            (void)ex;
+            AFEX_LOG_ERROR("{}: {}", ex.description(), m_FilePath.string());
         }
-        // todo: find values that have changed
     }
 
     void ConfigImpl::Save()
     {
-        std::ofstream file(m_FileName);
+        const std::string filePathStr = m_FilePath.string();
+
+        std::ofstream file(filePathStr);
         if (file.is_open())
         {
             file << m_ConfigTable;
             file.close();
-            AFEX_LOG_TRACE("Config file saved: {}", m_FileName);
+            AFEX_LOG_TRACE("Config file saved: {}", filePathStr);
         }
         else
         {
-            AFEX_LOG_ERROR("Could not save settings file: {}", m_FileName);
+            AFEX_LOG_ERROR("Could not save settings file: {}", filePathStr);
         }
     }
 
@@ -77,11 +103,7 @@ namespace Core
         }
 
         size_t lastDotPos = name.find_last_of('.');
-        if (lastDotPos == std::string::npos)
-        {
-            lastDotPos = 0;
-        }
-        const std::string_view varName = name.substr(lastDotPos+1);
+        const std::string_view varName = (lastDotPos == std::string::npos) ? name : name.substr(lastDotPos+1);
 
         auto found = table->find(varName);
         if (found != table->end())

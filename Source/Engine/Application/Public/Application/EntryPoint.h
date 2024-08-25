@@ -3,13 +3,11 @@
 // Engine
 #include <Application/Application.export.h>
 #include <Application/Application.h>
-#include <Core/Paths.h>
 
 //////////////////////////////////////////////////////////////////////////
 #define AFEX_DECLARE_ENTRY_POINT(appType)   \
-    int main(int argc, char* argv[])        \
+    int main(int argc, const char* argv[])        \
     {                                       \
-        Core::Paths paths(argc, argv);      \
         appType app;                        \
-        return app.Run();                   \
+        return app.Run(argc, argv);         \
     }

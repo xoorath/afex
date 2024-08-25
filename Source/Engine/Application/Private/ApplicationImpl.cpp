@@ -4,6 +4,7 @@
 #include <Core/Assert.h>
 #include <Core/CommonMacros.h>
 #include <Core/Logging.h>
+#include <Core/Paths.h>
 #include <Platform/HMI/Cursor.h>
 #include <Platform/HMI/Keyboard.h>
 #include <Platform/HMI/ImguiInputProvider.h>
@@ -18,10 +19,7 @@
 namespace Application
 {
     ////////////////////////////////////////////////////////////////////////// Public
-    ApplicationImpl::ApplicationImpl()
-        : m_Config("afex")
-    {
-    }
+    ApplicationImpl::ApplicationImpl() = default;
 
     ApplicationImpl::~ApplicationImpl()
     {
@@ -33,6 +31,26 @@ namespace Application
         }
     }
     
+    bool ApplicationImpl::EarlyInit(int argc, const char* argv[])
+    {
+        AFEX_LOG_TRACE(__FUNCTION__ "()");
+
+        if(Core::Paths::GlobalInit(argc, argv))
+        {
+            AddShutdownProcedure("Paths Global", [](){ Core::Paths::GlobalShutdown(); });
+        }
+        else
+        {
+            return false;
+        }
+
+        // todo: get this configuration path from the command line if it's provided.
+        // when not on desktop platforms just use "afex" rather than a path.
+        m_Config.emplace(Core::Paths::ApplicationDirectory() / "afex.toml");
+        
+        return true;
+    }
+
     bool ApplicationImpl::Init()
     {
         AFEX_LOG_TRACE(__FUNCTION__ "()");
@@ -45,6 +63,17 @@ namespace Application
         {
             return false;
         }
+
+        ////////////////////////////////////////////////////////////////////////// Filesystem
+        m_Filesystem.emplace(m_Config.value());
+        using namespace std::filesystem;
+        path testPath;
+        auto result = m_Filesystem->ResolvePath(path("{{assets}}") / "foo" / "bar", testPath);
+        result = m_Filesystem->ResolvePath(path("{{assets}}") / "foo" / "bar.txt", testPath);
+        result = m_Filesystem->ResolvePath(path("{{assets}}") / "foo" / "bar.txt", testPath);
+
+
+        (void)result;
 
         ////////////////////////////////////////////////////////////////////////// ImGui Context
         m_ImguiContext = ImGui::CreateContext();
@@ -61,9 +90,10 @@ namespace Application
         }
 
         ////////////////////////////////////////////////////////////////////////// Window
-        const uint32_t width =      m_Config.GetSetting<uint32_t>("window.width", 1920);
-        const uint32_t height =     m_Config.GetSetting<uint32_t>("window.height", 1080);
-        const std::string title =   m_Config.GetSetting<std::string>("window.title", "afex");
+        const uint32_t width =      m_Config.value().GetSetting<uint32_t>("window.width", 1920);
+        const uint32_t height =     m_Config.value().GetSetting<uint32_t>("window.height", 1080);
+        const std::string title =   m_Config.value().GetSetting<std::string>("window.title", "afex");
+        m_Config->Save();
 
         const Platform::WindowArgs windowArgs(title, m_ImguiContext, width, height);
         m_Window.emplace(windowArgs);
@@ -86,7 +116,7 @@ namespace Application
         if (m_RenderEngine->IsValid())
         {
             AddShutdownProcedure("Render Engine",
-                [&m_RenderEngine=m_RenderEngine]()
+                [&m_RenderEngine = m_RenderEngine]()
                 {
                     m_RenderEngine.reset();
                 });

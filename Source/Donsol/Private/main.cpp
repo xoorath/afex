@@ -14,17 +14,23 @@
 #include <Platform/HMI/Keyboard.h>
 #include <Platform/Window.h>
 
+// System
+#include <string_view>
+
 namespace Donsol
 {
     class DonsolApp : public Application::Application
     {
+    public:
+        DonsolApp()
+        {
+            ConfigureLogging();
+            AddShutdownProcedure("DonsolApp Logging", &ShutdownLogging);
+        }
     protected:
 
         bool EarlyInit() override
         {
-            ConfigureLogging();
-            AddShutdownProcedure("DonsolApp Logging", &ShutdownLogging);
-
             return true;
         }
 
@@ -34,7 +40,8 @@ namespace Donsol
             Platform::Keyboard& keyboard    = window.GetKeyboardMutable();
             Graphics::RenderEngine& render  = GetRenderEngineMutable();
 
-            m_Config.emplace("donsol");
+            using namespace std::string_view_literals;
+            m_Config.emplace("donsol"sv);
 
             render.SetDebugMode(m_DebugMode);
             keyboard.OnKeyEvent() +=

@@ -71,15 +71,55 @@
         }                                                                                                       \
     }                                                                                                           \
     while(false);
-#else
+
+// AFEX_FATAL_* acts as an assert when AFEX_ASSERT_ENABLED==1 and logs 
+// fatally + terminates when asserts are disabled. In public builds the 
+// messages are not stripped, so provide information to the user
+// accordingly. The file and line are not logged when 
+// AFEX_ASSERT_ENABLED==0, so provide the infromation neccesary to 
+// understand which fatal error was encountered.
+#define AFEX_FATAL_FAIL(...)                    AFEX_ASSERT_FAIL(__VA_ARGS__)
+#define AFEX_FATAL_CHECK(condition)             AFEX_ASSERT(condition)
+#define AFEX_FATAL_CHECK_MSG(condition, ...)    AFEX_ASSERT_MSG(condition, __VA_ARGS__)
+#else // !AFEX_ASSERT_ENABLED
 //////////////////////////////////////////////////////////////////////////
 #define AFEX_ASSERT_FAIL(...)
-#define AFEX_ASSERT_MSG(condition, ...)                                                                         \
-    do                                                                                                          \
-    {                                                                                                           \
-        AFEX_UNUSED((condition));                                                                               \
-    }                                                                                                           \
+#define AFEX_ASSERT_MSG(condition, ...)
+#define AFEX_ASSERT_PUBLIC(condition, ...)
+
+#define AFEX_FATAL_FAIL(...)                                                                \
+    do                                                                                      \
+    {                                                                                       \
+        AFEX_LOG_FATAL(__VA_ARGS__);                                                        \
+        /*TODO: Add a debug break where when we are certain this is an internal build.*/    \
+        std::exit(EXIT_FAILURE);                                                            \
+    }                                                                                       \
     while(false);
+
+#define AFEX_FATAL_CHECK(condition)                                                             \
+    do                                                                                          \
+    {                                                                                           \
+        if(!((condition)))                                                                      \
+        {                                                                                       \
+            AFEX_LOG_FATAL("AFEX_FATAL_CONDITION(" #condition ") failed");                      \
+            /*TODO: Add a debug break where when we are certain this is an internal build.*/    \
+            std::exit(EXIT_FAILURE);                                                            \
+        }                                                                                       \
+    }                                                                                           \
+    while(false);
+
+#define AFEX_FATAL_CHECK_MSG(condition, ...)                                                    \
+    do                                                                                          \
+    {                                                                                           \
+        if(!((condition)))                                                                      \
+        {                                                                                       \
+            AFEX_LOG_FATAL(__VA_ARGS__);                                                        \
+            /*TODO: Add a debug break where when we are certain this is an internal build.*/    \
+            std::exit(EXIT_FAILURE);                                                            \
+        }                                                                                       \
+    }                                                                                           \
+    while(false);
+
 #endif
 
 #define AFEX_ASSERT(condition) AFEX_ASSERT_MSG(condition, #condition)

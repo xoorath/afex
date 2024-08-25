@@ -17,25 +17,28 @@ namespace Application
 
     /*APPLICATION_EXPORT*/ Application::~Application() = default;
 
-    int32_t Application::Run()
+    int32_t Application::Run(int argc, const char* argv[])
     {
-        // Important: just because an application may want to run init code 
-        // before the engine is initialized: we very likely want m_PIMPL to 
-        // be created before EarlyInit.
         m_PIMPL.emplace();
-        if(!EarlyInit())
+        
+        if(!m_PIMPL->EarlyInit(argc, argv))
         {
             return -101;
         }
 
+        if(!EarlyInit())
+        {
+            return -100;
+        }
+
         if(!m_PIMPL->Init())
         {
-            return -102;
+            return -200;
         }
 
         if(!Init())
         {
-            return -103;
+            return -201;
         }
 
         while(!m_PIMPL->CloseRequested())
@@ -68,6 +71,11 @@ namespace Application
     /*APPLICATION_EXPORT*/ void Application::AddShutdownProcedure(std::string_view debugName, std::function<void()> procedure)
     {
         return m_PIMPL->AddShutdownProcedure(debugName, procedure);
+    }
+
+    /*APPLICATION_EXPORT*/ const Core::Filesystem& Application::GetFilesystem() const
+    {
+        return m_PIMPL->GetFilesystem();
     }
 
     /*APPLICATION_EXPORT*/ const Graphics::RenderEngine& Application::GetRenderEngine() const

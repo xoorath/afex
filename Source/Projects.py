@@ -16,6 +16,11 @@ def GetAllProjects() -> list[ProjectBase]:
             directory="Engine/Core",
             conan_dependencies=[
                 ConanDependency(
+                    require="icu/75.1",
+                    cmake_name = "icu::icu",
+                    options=[ConanDependencyOption("shared", True)]
+                ),
+                ConanDependency(
                     require="spdlog/1.14.1",
                     cmake_name = "spdlog::spdlog",
                     options=[ConanDependencyOption("shared", True)]
@@ -26,7 +31,8 @@ def GetAllProjects() -> list[ProjectBase]:
                     options=[
                         ConanDependencyOption("shared", True),
                         ConanDependencyOption("TOML_EXCEPTIONS", False)
-                    ]
+                    ],
+                    is_public=False
                 )
             ],
             defines=["SPDLOG_ACTIVE_LEVEL=0"]

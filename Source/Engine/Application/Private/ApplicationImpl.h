@@ -2,6 +2,7 @@
 
 // Engine
 #include <Core/Config/Config.h>
+#include <Core/Filesystem.h>
 #include <Platform/HMI/ImguiInputProvider.h>
 #include <Platform/Window.h>
 #include <Graphics/ImguiRenderer.h>
@@ -33,6 +34,7 @@ namespace Application
         ApplicationImpl& operator=(const ApplicationImpl&)          = delete;
         ApplicationImpl& operator=(ApplicationImpl&&) noexcept      = delete;
 
+        bool EarlyInit(int argc, const char* argv[]);
         bool Init();
 
         bool CloseRequested() const;
@@ -43,6 +45,8 @@ namespace Application
         void WaitForRenderer();
 
         void AddShutdownProcedure(std::string_view debugName, std::function<void()> procedure);
+
+        const Core::Filesystem& GetFilesystem() const { return m_Filesystem.value(); }
 
         const Graphics::RenderEngine& GetRenderEngine() const { return m_RenderEngine.value(); }
         Graphics::RenderEngine& GetRenderEngineMutable() { return m_RenderEngine.value(); }
@@ -59,9 +63,10 @@ namespace Application
         void UnsetRenderResolution();
         
     private:
-        Core::Config m_Config;
+        std::optional<Core::Config> m_Config;
 
         ImGuiContext* m_ImguiContext = nullptr;
+        std::optional<Core::Filesystem> m_Filesystem;
         std::optional<Platform::Window> m_Window;
         std::optional<Graphics::RenderEngine> m_RenderEngine;
         std::optional<Graphics::ImGuiRenderer> m_ImguiRenderer;

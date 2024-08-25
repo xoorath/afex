@@ -15,6 +15,11 @@ namespace Core
         : m_PIMPL(collectionName)
     {
     }
+
+    /*CORE_EXPORT explicit*/ Config::Config(const std::filesystem::path& collectionPath)
+        : m_PIMPL(collectionPath)
+    {
+    }
     
     /*CORE_EXPORT*/ Config::~Config() = default;
 

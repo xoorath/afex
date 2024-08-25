@@ -1,11 +1,12 @@
 #pragma once
 
 // Engine
-#include <Core/PIMPL.h>
 #include <Core/Core.export.h>
 #include <Core/Config/ConfigValue.h>
+#include <Core/PIMPL.h>
 
 // System
+#include <filesystem>
 #include <functional>
 #include <optional>
 
@@ -30,11 +31,23 @@ namespace Core
     class Config
     {
     public:
-        // The collection name uniquely identifies this collection of configuration values.
+        // The collection name uniquely identifies this collection of 
+        // configuration values. 
+        //
         // On desktop platforms this refers to a filename next to the executable.
-        // example: the "afex" config refers to a file named afex.toml
-        // Other/future platforms will use this API but may have a different config backing.
-        CORE_EXPORT Config(std::string_view collectionName);
+        // Game code should not be assumed that collections have any specific
+        // backings such as toml, etc.
+        CORE_EXPORT explicit Config(std::string_view collectionName);
+
+        //////////////////////////////////////////////////////////////////////////
+        // Creates a config from a toml file at a specific path.
+        // 
+        // IMPORTANT:
+        // This override is discouraged for general use as it presumes a 
+        // file-based backing for configs. It is used in development for command
+        // line overrides of the afex config.
+        CORE_EXPORT explicit Config(const std::filesystem::path& collectionPath);
+
         CORE_EXPORT ~Config(); /*=default*/
         
         Config()                                  = delete;

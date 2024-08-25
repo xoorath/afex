@@ -8,6 +8,11 @@
 #include <functional>
 #include <string_view>
 
+namespace Core
+{
+    class Filesystem;
+}
+
 namespace Graphics
 {
     class RenderEngine;
@@ -24,12 +29,47 @@ namespace Application
     class ApplicationImpl;
 
     //////////////////////////////////////////////////////////////////////////
+    // Application lifecycle:
+    //
+    // EARLY INIT
+    // 1 The engine will first perform it's on early init to setup the 
+    //   filesystem, filesystem paths, and to load the engine config.
+    // 
+    // 2 The application will then get a chance to EarlyInit. This can be used
+    //   to configure the engine before engine systems come online.
+    //
+    // INIT
+    // 1 The engine systems will be initialized.
+    //
+    // 2 The application init will then be called
+    // 
+    // UPDATE AND RENDER
+    // 1 The render function is called. This is where render calls may be 
+    //   submitted for later display.
+    //
+    // 2 The GUI function is called.
+    //
+    // 3 The render calls from the first two steps are submitted. The GPU
+    //   begins drawing the frame.
+    //
+    // 4 The update function is called. This runs concurrently with rendering
+    //   happening in the background.
+    //
+    // 5 The main thread waits for the renderer to complete.
+    //
+    // SHUTDOWN
+    // The application can be terminated early on during initialization if
+    // engine systems fail to startup or if the application returns false from
+    // any initialization sequence. When the application finishes running the
+    // application may be destroyed. During destruction all shutdown procedures
+    // are run in reverse chronological order from when they were added with
+    // AddShutdownProcedure.
     class Application
     {
     public:
         APPLICATION_EXPORT Application();
         APPLICATION_EXPORT ~Application(); /*= default*/
-        APPLICATION_EXPORT int32_t Run();
+        APPLICATION_EXPORT int32_t Run(int argc, const char* argv[]);
 
     protected:
         Application(const Application&)                 = delete;
@@ -38,7 +78,7 @@ namespace Application
         Application& operator=(Application&&) noexcept  = delete;
 
         // Return true if initialization was successful and the app may be run.
-        // Runs before the engine is initialized.
+        // Runs before the engine systems are initialized.
         virtual bool EarlyInit() = 0;
 
         // Return true if initialization was successful and the app may be run.
@@ -60,7 +100,7 @@ namespace Application
         // 
         // if(InitGameSystem())
         // {
-        //      AddShutdownProcedure(&ShutdownGameSystem);
+        //      AddShutdownProcedure("Game System Name", &ShutdownGameSystem);
         // }
         // else
         // {
@@ -72,11 +112,14 @@ namespace Application
         // Engine systems:
         // These systems are expected to be valid by the time Init is called.
 
+        APPLICATION_EXPORT const Core::Filesystem& GetFilesystem() const;
+
         APPLICATION_EXPORT const Graphics::RenderEngine& GetRenderEngine() const;
         APPLICATION_EXPORT Graphics::RenderEngine& GetRenderEngineMutable();
 
         APPLICATION_EXPORT const Platform::Window& GetWindow() const;
         APPLICATION_EXPORT Platform::Window& GetWindowMutable();
+
 
         //////////////////////////////////////////////////////////////////////////
         // Config:
@@ -86,6 +129,6 @@ namespace Application
         APPLICATION_EXPORT void SetRenderResolution(uint32_t width, uint32_t height);
 
     private:
-        Core::PIMPL<ApplicationImpl, 3320> m_PIMPL;
+        Core::PIMPL<ApplicationImpl, 3408> m_PIMPL;
     };
 }

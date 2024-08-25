@@ -1,13 +1,14 @@
 #pragma once
 
 // Engine
-#include <Core/Signal.h>
 #include <Core/Config/ConfigValue.h>
 
 // System
 #include <cstdint>
+#include <filesystem>
 #include <string_view>
 
+// External
 #include <toml.hpp>
 
 //////////////////////////////////////////////////////////////////////////
@@ -24,6 +25,10 @@ namespace Core
         // few constraints we have such as the collection name being a valid
         // filename on all supported systems.
         explicit ConfigImpl(std::string_view collectionName);
+
+        // This override should not be used by the application. 
+        // It's intended for development-time overrides of the afex config
+        explicit ConfigImpl(const std::filesystem::path& collectionPath);
 
         ConfigImpl() = default;
         ConfigImpl(const ConfigImpl&) = default;
@@ -51,7 +56,7 @@ namespace Core
         toml::table* FindTable(std::string_view varName, bool createMissingPaths);
 
         std::string m_CollectionName;
-        std::string m_FileName;
+        std::filesystem::path m_FilePath;
         toml::table m_ConfigTable;
     };
 }
